@@ -1,9 +1,18 @@
 import express from "express";
 import {
-  requestOTP, verifyOTP, getProfile,
-  addToWishlist, removeFromWishlist,
-  getCart, addToCart, updateCartItem, removeFromCart, clearCart,
-  createOrder, getMyOrders
+  requestOTP,
+  verifyOTP,
+  getProfile,
+  addToWishlist,
+  removeFromWishlist,
+  getCart,
+  addToCart,
+  updateCartItem,
+  removeFromCart,
+  clearCart,
+  createOrder,
+  getMyOrders,
+  getAllUsers
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -30,5 +39,8 @@ router.post("/cart/clear", protect, clearCart);
 // Orders
 router.post("/orders", protect, createOrder);
 router.get("/orders", protect, getMyOrders);
+
+// ✅ SIMPLE GET ALL USERS API
+router.get("/users", protect, getAllUsers);
 
 export default router;
