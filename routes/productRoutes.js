@@ -9,7 +9,7 @@ import {
   updateProduct,
   deleteProduct,
   getAllProducts,
-} from "../controllers/adminProductController.js";
+} from "../controllers/productController.js";
 
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
 import { upload } from "../middleware/upload.js";
