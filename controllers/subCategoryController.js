@@ -7,13 +7,22 @@ export const createSubCategory = async (req, res) => {
     const { name, parentCategory } = req.body;
 
     if (!name || !parentCategory) {
-      return res.status(400).json({ message: "Name and parentCategory are required" });
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Generate slug automatically
-    const slug = slugify(name, { lower: true });
+    const slug = slugify(name, { lower: true, strict: true });
 
-    const sub = await SubCategory.create({ name, slug, parentCategory });
+    const exists = await SubCategory.findOne({ slug });
+    if (exists) {
+      return res.status(400).json({ message: "Subcategory already exists" });
+    }
+
+    const sub = await SubCategory.create({
+      name,
+      slug,
+      parentCategory,
+    });
+
     res.status(201).json(sub);
   } catch (error) {
     res.status(400).json({ message: error.message });
