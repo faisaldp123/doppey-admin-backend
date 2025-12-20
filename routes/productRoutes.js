@@ -2,7 +2,7 @@ import express from "express";
 import {
   createProduct,
   getProductsBySubCategory,
-  getProductById,
+  getProductBySlug,
 } from "../controllers/productController.js";
 
 import {
@@ -16,13 +16,27 @@ import { upload } from "../middleware/upload.js";
 
 const router = express.Router();
 
-// Public Routes
+/* PUBLIC */
 router.get("/subcategory/:slug", getProductsBySubCategory);
-router.get("/:id", getProductById);
+router.get("/product/:slug", getProductBySlug);
 
-// Admin Routes
-router.post("/", protect, adminOnly, upload.single("image"), createProduct);
-router.put("/:id", protect, adminOnly, upload.single("image"), updateProduct);
+/* ADMIN */
+router.post(
+  "/",
+  protect,
+  adminOnly,
+  upload.array("images", 10),
+  createProduct
+);
+
+router.put(
+  "/:id",
+  protect,
+  adminOnly,
+  upload.array("images", 10),
+  updateProduct
+);
+
 router.delete("/:id", protect, adminOnly, deleteProduct);
 router.get("/", protect, adminOnly, getAllProducts);
 
