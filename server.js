@@ -41,7 +41,7 @@ app.post("/api/admin/login", (req, res) => {
 app.use("/api/categories", categoryRoutes);
 app.use("/api/subcategories", subCategoryRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/users", userRoutes);
+app.use("/api", userRoutes);;
 app.use("/api/dashboard", dashboardRoutes);
 
 // START SERVER
