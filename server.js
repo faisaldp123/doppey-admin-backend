@@ -10,6 +10,7 @@ import productRoutes from "./routes/productRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import couponRoutes from "./routes/couponRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -45,6 +46,7 @@ app.use("/api/products", productRoutes);
 app.use("/api", userRoutes);;
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api", orderRoutes);
+app.use("/api", couponRoutes);
 
 // START SERVER
 const PORT = process.env.PORT || 5000;
