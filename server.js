@@ -11,6 +11,10 @@ import userRoutes from "./routes/userRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
+import inventoryRoutes from "./routes/inventoryRoutes.js";
+import warehouseRoutes from "./routes/warehouseRoutes.js";
+import returnRoutes from "./routes/returnRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -47,6 +51,10 @@ app.use("/api", userRoutes);;
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api", orderRoutes);
 app.use("/api", couponRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/warehouse", warehouseRoutes);
+app.use("/api/returns", returnRoutes);
+app.use("/api/payments", paymentRoutes);
 
 // START SERVER
 const PORT = process.env.PORT || 5000;
