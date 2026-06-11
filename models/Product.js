@@ -51,6 +51,74 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
+    // ── Fields added to match frontend data ──
+
+    brand: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    rating: {
+      type: Number,
+      min: 0,
+      max: 5,
+      default: 0,
+    },
+
+    sku: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    discount: {
+      type: Number,
+      default: 0,
+    },
+
+    isBestSeller: {
+      type: Boolean,
+      default: false,
+    },
+
+    isNewArrival: {
+      type: Boolean,
+      default: false,
+    },
+
+    sizes: {
+      type: [String],
+      default: [],
+    },
+
+    colors: {
+      type: [String],
+      default: [],
+    },
+
+    material: {
+      type: String,
+      default: "",
+    },
+
+    fit: {
+      type: String,
+      default: "",
+    },
+
+    shipping: {
+      type: String,
+      default: "Free shipping across India. Orders are delivered within 3-7 business days.",
+    },
+
+    care: {
+      type: String,
+      default: "Machine wash cold. Do not bleach. Tumble dry low. Iron on low heat.",
+    },
+
+    // ── End added fields ──
+
     isActive: {
       type: Boolean,
       default: true,

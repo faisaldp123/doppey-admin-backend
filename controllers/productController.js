@@ -7,7 +7,26 @@ import slugify from "slugify";
 // Create Product (Admin) - Requires minimum 5 images
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, price, stock, category, subCategory } = req.body;
+    const {
+      name,
+      description,
+      price,
+      stock,
+      category,
+      subCategory,
+      brand,
+      rating,
+      sku,
+      discount,
+      isBestSeller,
+      isNewArrival,
+      sizes,
+      colors,
+      material,
+      fit,
+      shipping,
+      care,
+    } = req.body;
 
     if (!name || !description || !price || !category || !subCategory) {
       return res.status(400).json({ message: "All fields are required" });
@@ -28,6 +47,18 @@ export const createProduct = async (req, res) => {
       category,
       subCategory,
       images,
+      brand:        brand        || "",
+      rating:       rating       || 0,
+      sku:          sku          || "",
+      discount:     discount     || 0,
+      isBestSeller: isBestSeller === "true" || isBestSeller === true,
+      isNewArrival: isNewArrival === "true" || isNewArrival === true,
+      sizes:        sizes  ? (Array.isArray(sizes)  ? sizes  : JSON.parse(sizes))  : [],
+      colors:       colors ? (Array.isArray(colors) ? colors : JSON.parse(colors)) : [],
+      material:     material || "",
+      fit:          fit      || "",
+      shipping:     shipping || "",
+      care:         care     || "",
     });
 
     res.status(201).json(product);
@@ -40,10 +71,26 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updates = { ...req.body };
 
     if (req.files && req.files.length > 0) {
       updates.images = req.files.map((file) => file.path);
+    }
+
+    // Parse boolean strings from FormData
+    if (updates.isBestSeller !== undefined) {
+      updates.isBestSeller = updates.isBestSeller === "true" || updates.isBestSeller === true;
+    }
+    if (updates.isNewArrival !== undefined) {
+      updates.isNewArrival = updates.isNewArrival === "true" || updates.isNewArrival === true;
+    }
+
+    // Parse array strings from FormData
+    if (updates.sizes && !Array.isArray(updates.sizes)) {
+      updates.sizes = JSON.parse(updates.sizes);
+    }
+    if (updates.colors && !Array.isArray(updates.colors)) {
+      updates.colors = JSON.parse(updates.colors);
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(id, updates, { new: true });
@@ -109,6 +156,30 @@ export const getProductBySlug = async (req, res) => {
     if (!product) return res.status(404).json({ message: "Product not found" });
 
     res.json(product);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get best sellers (Public)
+export const getBestSellers = async (req, res) => {
+  try {
+    const products = await Product.find({ isBestSeller: true, isActive: true })
+      .populate("category", "name")
+      .populate("subCategory", "name");
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get new arrivals (Public)
+export const getNewArrivals = async (req, res) => {
+  try {
+    const products = await Product.find({ isNewArrival: true, isActive: true })
+      .populate("category", "name")
+      .populate("subCategory", "name");
+    res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
