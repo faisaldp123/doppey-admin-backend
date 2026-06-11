@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
 import connectDB from "./config/db.js";
+import path from "path";
 
 import categoryRoutes from "./routes/categoryRoutes.js";
 import subCategoryRoutes from "./routes/subCategoryRoutes.js";
@@ -26,6 +27,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(morgan("dev"));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // ================================
 // ADMIN LOGIN ROUTE (PASSWORD ONLY)
