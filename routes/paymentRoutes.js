@@ -1,11 +1,20 @@
 import express from "express";
-import Payment from "../models/Payment.js";
+
+import {
+  createRazorpayOrder,
+  verifyPayment,
+} from "../controllers/paymentController.js";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-  const data = await Payment.find();
-  res.json(data);
-});
+router.post(
+  "/create-order",
+  createRazorpayOrder
+);
+
+router.post(
+  "/verify",
+  verifyPayment
+);
 
 export default router;
