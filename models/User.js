@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema({
   name: { type: String, default: "" },
   phone: { type: String, required: true, unique: true },
   isAdmin: { type: Boolean, default: false },
+  role: {
+  type: String,
+  enum: ["user", "admin"],
+  default: "user",
+},
 
   // OTP flow fields
   otp: { type: String }, // hashed OTP or plain (here plain for demo) — change when productionizing

@@ -8,6 +8,7 @@ import {
   getProductBySlug,
   getBestSellers,
   getNewArrivals,
+  getPublicProducts,
 } from "../controllers/productController.js";
 
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
@@ -23,6 +24,7 @@ router.get("/product/:slug",         getProductBySlug);
 
 /* ── ADMIN ── */
 router.get(   "/",   protect, adminOnly, getAllProducts);
+router.get("/public", getPublicProducts);
 router.post(  "/",   protect, adminOnly, upload.array("images", 10), createProduct);
 router.put(   "/:id", protect, adminOnly, upload.array("images", 10), updateProduct);
 router.delete("/:id", protect, adminOnly, deleteProduct);
