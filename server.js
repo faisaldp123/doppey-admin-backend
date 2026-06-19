@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import morgan from "morgan";
 import connectDB from "./config/db.js";
+import path from "path";                          
+import { fileURLToPath } from "url"; 
 
 import categoryRoutes from "./routes/categoryRoutes.js";
 import subCategoryRoutes from "./routes/subCategoryRoutes.js";
@@ -18,6 +20,9 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 
 dotenv.config();
 connectDB();
+
+const __filename = fileURLToPath(import.meta.url);  
+const __dirname = path.dirname(__filename);
 
 // create express app BEFORE using it
 const app = express();
