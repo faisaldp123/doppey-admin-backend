@@ -17,7 +17,8 @@ import inventoryRoutes from "./routes/inventoryRoutes.js";
 import warehouseRoutes from "./routes/warehouseRoutes.js";
 import returnRoutes from "./routes/returnRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
-import bannerRoutes from "./routes/bannerRoutes.js"
+import bannerRoutes from "./routes/bannerRoutes.js";
+import trackingRoutes from "./routes/trackingRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -62,6 +63,7 @@ app.use("/api/warehouse", warehouseRoutes);
 app.use("/api/returns", returnRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/banners", bannerRoutes);
+app.use("/api", trackingRoutes);
 
 // START SERVER
 const PORT = process.env.PORT || 5000;
