@@ -33,6 +33,8 @@ cod_amount:
     ],
   };
 
+  console.log("DELHIVERY PAYLOAD:");
+console.log(JSON.stringify(payload, null, 2));
   const response = await axios.post(
     "https://track.delhivery.com/api/cmu/create.json",
     payload,
@@ -43,6 +45,9 @@ cod_amount:
       },
     }
   );
+
+  console.log("DELHIVERY API RESPONSE:");
+console.log(response.data);
 
   return response.data;
 };
