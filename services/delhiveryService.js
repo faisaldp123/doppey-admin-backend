@@ -17,14 +17,14 @@ export const createDelhiveryShipment = async (order) => {
         phone: order.address.phone,
         order: order._id.toString(),
         payment_mode:
-          order.paymentMethod === "COD"
-            ? "COD"
-            : "Prepaid",
-        total_amount: order.totalAmount,
-        cod_amount:
-          order.paymentMethod === "COD"
-            ? order.totalAmount
-            : 0,
+  order.paymentMethod === "cod"
+    ? "COD"
+    : "Prepaid",
+
+cod_amount:
+  order.paymentMethod === "cod"
+    ? order.totalAmount
+    : 0,
         products_desc: "Fashion Products",
         quantity: order.items.length,
         weight: "500",
