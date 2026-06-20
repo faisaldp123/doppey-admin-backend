@@ -4,30 +4,73 @@ import Order from "../models/Order.js";
 
 // CREATE ORDER
 export const createOrder = async (req, res) => {
-  const { items, address } = req.body;
+  try {
+    const {
+      items,
+      address,
+      shipping = 0,
+      codCharge = 0,
+      paymentMethod = "cod",
+      total,
+    } = req.body;
 
-  if (!items || items.length === 0) {
-    return res.status(400).json({ message: "No items in order" });
+    if (!items || items.length === 0) {
+      return res
+        .status(400)
+        .json({
+          message: "No items in order",
+        });
+    }
+
+    if (!address || !address.fullName) {
+      return res
+        .status(400)
+        .json({
+          message: "Address required",
+        });
+    }
+
+    const itemsTotal = items.reduce(
+      (sum, item) =>
+        sum + item.price * item.quantity,
+      0
+    );
+
+    const finalTotal =
+      total ||
+      itemsTotal +
+        Number(shipping) +
+        Number(codCharge);
+
+    const order = await Order.create({
+      user: req.user._id,
+
+      items,
+
+      address,
+
+      shipping,
+
+      codCharge,
+
+      paymentMethod,
+
+      totalAmount: finalTotal,
+
+      status: "Placed",
+    });
+
+    res.status(201).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: error.message,
+    });
   }
-
-  if (!address || !address.fullName) {
-    return res.status(400).json({ message: "Address required" });
-  }
-
-  const totalAmount = items.reduce(
-    (sum, i) => sum + i.price * i.quantity,
-    0
-  );
-
-  const order = await Order.create({
-    user: req.user._id,
-    items,
-    totalAmount,
-    address,
-    status: "Placed",
-  });
-
-  res.status(201).json(order);
 };
 
 // GET MY ORDERS

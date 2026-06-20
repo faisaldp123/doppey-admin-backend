@@ -31,9 +31,31 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    shipping: {
+      type: Number,
+      default: 0,
+    },
+
+    codCharge: {
+      type: Number,
+      default: 0,
+    },
+
+    paymentMethod: {
+      type: String,
+      enum: ["cod", "online"],
+      default: "cod",
+    },
+
     status: {
       type: String,
-      enum: ["Placed", "Confirmed", "Shipped", "Delivered", "Cancelled"],
+      enum: [
+        "Placed",
+        "Confirmed",
+        "Shipped",
+        "Delivered",
+        "Cancelled",
+      ],
       default: "Placed",
     },
 
