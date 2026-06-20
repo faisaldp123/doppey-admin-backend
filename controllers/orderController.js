@@ -116,6 +116,27 @@ export const getMyOrders = async (req, res) => {
   res.json(orders);
 };
 
+// GET ORDER BY ID
+export const getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate("items.product", "name price images sizes");
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (!req.user.isAdmin && order.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to view this order" });
+    }
+
+    res.json(order);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 /* ================= ADMIN ================= */
 
 // GET ALL ORDERS

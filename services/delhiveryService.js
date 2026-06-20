@@ -9,7 +9,7 @@ name: process.env.DELHIVERY_PICKUP_LOCATION,
 
 
   shipments: [
-  {
+  { 
   name: order.address.fullName,
   add: `${order.address.street}, ${order.address.city}, ${order.address.state}`,
   pin: order.address.pincode,
