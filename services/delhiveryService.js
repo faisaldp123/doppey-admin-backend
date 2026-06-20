@@ -10,32 +10,43 @@ name: process.env.DELHIVERY_PICKUP_LOCATION,
 
   shipments: [
   {
-    name: order.address.fullName,
-    add: `${order.address.street}, ${order.address.city}, ${order.address.state}`,
-    pin: order.address.pincode,
-    city: order.address.city,
-    state: order.address.state,
-    country: "India",
-    phone: order.address.phone,
-    order: order._id.toString(),
+  name: order.address.fullName,
+  add: `${order.address.street}, ${order.address.city}, ${order.address.state}`,
+  pin: order.address.pincode,
+  city: order.address.city,
+  state: order.address.state,
+  country: "India",
+  phone: order.address.phone,
+  order: order._id.toString(),
 
-    payment_mode:
-      order.paymentMethod === "cod"
-        ? "COD"
-        : "Prepaid",
+  payment_mode:
+    order.paymentMethod === "cod"
+      ? "COD"
+      : "Prepaid",
 
-    cod_amount:
-      order.paymentMethod === "cod"
-        ? order.totalAmount
-        : 0,
+  cod_amount:
+    order.paymentMethod === "cod"
+      ? order.totalAmount
+      : 0,
 
-    total_amount: order.totalAmount,
+  total_amount: order.totalAmount,
 
-    products_desc: "Fashion Products",
-    quantity: String(order.items.length),
-    weight: "500",
-    shipping_mode: "Surface",
-  },
+  seller_name: "DOPPEY",
+  seller_add: "Delhi, India",
+
+  products_desc: "Fashion Products",
+
+  quantity: order.items
+    .reduce(
+      (sum, item) =>
+        sum + item.quantity,
+      0
+    )
+    .toString(),
+
+  weight: "500",
+  shipping_mode: "Surface",
+}
 ],
 };
 
@@ -74,13 +85,13 @@ console.log("STATUS:");
 console.log(error.response?.status);
 
 console.log("DATA:");
-console.log(
-  JSON.stringify(
-    error.response?.data,
-    null,
-    2
-  )
-);
+console.log("FULL ERROR:");
+
+if (error.response) {
+  console.log(error.response.data);
+} else {
+  console.log(error.message);
+}
 
 throw error;
 
