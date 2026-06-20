@@ -2,6 +2,7 @@ import express from "express";
 import {
   createOrder,
   getMyOrders,
+  getOrderById,
   getAllOrders,
   updateOrderStatus,
 } from "../controllers/orderController.js";
@@ -12,6 +13,7 @@ const router = express.Router();
 /* USER */
 router.post("/orders", protect, createOrder);
 router.get("/orders", protect, getMyOrders);
+router.get("/orders/:id", protect, getOrderById);
 
 /* ADMIN */
 router.get("/admin/orders", protect, getAllOrders);
