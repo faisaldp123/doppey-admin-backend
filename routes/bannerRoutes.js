@@ -13,15 +13,19 @@ import {
 
 const router = express.Router();
 
-// Cloudinary storage — separate folders for desktop/mobile
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: (req, file) => ({
-    folder: file.fieldname === "desktopImage"
-      ? "doppey-banners/desktop"
-      : "doppey-banners/mobile",
-    allowed_formats: ["jpg", "jpeg", "png", "webp"],
-  }),
+  params: (req, file) => {
+    if (file.fieldname === "desktopImages") {
+      return { folder: "doppey-banners/desktop", allowed_formats: ["jpg", "jpeg", "png", "webp"] };
+    }
+    if (file.fieldname === "mobileImages") {
+      return { folder: "doppey-banners/mobile", allowed_formats: ["jpg", "jpeg", "png", "webp"] };
+    }
+    if (file.fieldname === "video") {
+      return { folder: "doppey-banners/videos", resource_type: "video", allowed_formats: ["mp4", "webm", "mov"] };
+    }
+  },
 });
 
 const upload = multer({ storage });
@@ -30,15 +34,17 @@ const upload = multer({ storage });
 router.get("/public", getPublicBanners);
 
 // ADMIN
-router.get(   "/",     protect, adminOnly, getAllBanners);
-router.post(  "/",     protect, adminOnly, upload.fields([
-  { name: "desktopImage", maxCount: 1 },
-  { name: "mobileImage",  maxCount: 1 },
+router.get("/",      protect, adminOnly, getAllBanners);
+router.post("/",     protect, adminOnly, upload.fields([
+  { name: "desktopImages", maxCount: 4 },
+  { name: "mobileImages",  maxCount: 4 },
+  { name: "video",         maxCount: 1 },
 ]), createBanner);
-router.put(   "/:id",  protect, adminOnly, upload.fields([
-  { name: "desktopImage", maxCount: 1 },
-  { name: "mobileImage",  maxCount: 1 },
+router.put("/:id",   protect, adminOnly, upload.fields([
+  { name: "desktopImages", maxCount: 4 },
+  { name: "mobileImages",  maxCount: 4 },
+  { name: "video",         maxCount: 1 },
 ]), updateBanner);
-router.delete("/:id",  protect, adminOnly, deleteBanner);
+router.delete("/:id", protect, adminOnly, deleteBanner);
 
 export default router;

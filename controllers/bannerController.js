@@ -25,16 +25,21 @@ export const createBanner = async (req, res) => {
   try {
     const { href, order, isActive } = req.body;
 
-    if (!req.files?.desktopImage || !req.files?.mobileImage) {
-      return res.status(400).json({ message: "Both desktop and mobile images are required" });
+    const desktopImages = (req.files?.desktopImages || []).map((f) => f.path);
+    const mobileImages  = (req.files?.mobileImages  || []).map((f) => f.path);
+    const video         = req.files?.video?.[0]?.path || "";
+
+    if (desktopImages.length === 0 || mobileImages.length === 0) {
+      return res.status(400).json({ message: "At least 1 desktop and 1 mobile image required" });
     }
 
     const banner = await Banner.create({
-      desktopImage: req.files.desktopImage[0].path,
-      mobileImage:  req.files.mobileImage[0].path,
-      href:         href    || "/shop",
-      order:        order   || 0,
-      isActive:     isActive !== undefined ? isActive === "true" : true,
+      desktopImages,
+      mobileImages,
+      video,
+      href:     href  || "/shop",
+      order:    order || 0,
+      isActive: isActive !== undefined ? isActive === "true" : true,
     });
 
     res.status(201).json(banner);
@@ -49,11 +54,14 @@ export const updateBanner = async (req, res) => {
     const { id } = req.params;
     const updates = { ...req.body };
 
-    if (req.files?.desktopImage) {
-      updates.desktopImage = req.files.desktopImage[0].path;
+    if (req.files?.desktopImages?.length > 0) {
+      updates.desktopImages = req.files.desktopImages.map((f) => f.path);
     }
-    if (req.files?.mobileImage) {
-      updates.mobileImage = req.files.mobileImage[0].path;
+    if (req.files?.mobileImages?.length > 0) {
+      updates.mobileImages = req.files.mobileImages.map((f) => f.path);
+    }
+    if (req.files?.video?.[0]) {
+      updates.video = req.files.video[0].path;
     }
     if (updates.isActive !== undefined) {
       updates.isActive = updates.isActive === "true";
