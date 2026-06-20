@@ -31,6 +31,23 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+waybill: {
+  type: String,
+  default: "",
+},
+
+trackingStatus: {
+  type: String,
+  enum: [
+    "Pending",
+    "Created",
+    "In Transit",
+    "Delivered",
+    "Cancelled",
+  ],
+  default: "Pending",
+},
+
     shipping: {
       type: Number,
       default: 0,

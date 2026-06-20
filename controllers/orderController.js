@@ -1,4 +1,5 @@
 import Order from "../models/Order.js";
+import { createDelhiveryShipment } from "../services/delhiveryService.js";
 
 /* ================= USER ================= */
 
@@ -59,6 +60,35 @@ export const createOrder = async (req, res) => {
 
       status: "Placed",
     });
+
+    try {
+  const shipment =
+    await createDelhiveryShipment(order);
+
+  console.log(
+    "DELHIVERY RESPONSE:"
+  );
+
+  console.log(shipment);
+
+  if (shipment?.packages?.[0]?.waybill) {
+    order.waybill =
+      shipment.packages[0].waybill;
+
+    order.trackingStatus =
+      "Created";
+
+    await order.save();
+  }
+} catch (err) {
+  console.log(
+    "DELHIVERY SHIPMENT FAILED"
+  );
+
+  console.log(
+    err.response?.data || err.message
+  );
+}
 
     res.status(201).json({
       success: true,
