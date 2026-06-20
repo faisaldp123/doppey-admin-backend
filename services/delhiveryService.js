@@ -59,13 +59,15 @@ console.log(!!process.env.DELHIVERY_API_TOKEN);
 console.log("PICKUP LOCATION:");
 console.log(process.env.DELHIVERY_PICKUP_LOCATION);
 
+const requestBody = `format=json&data=${encodeURIComponent(JSON.stringify(payload))}`;
+
 const response = await axios.post(
   "https://track.delhivery.com/api/cmu/create.json",
-  payload,
+  requestBody,
   {
     headers: {
       Authorization: `Token ${process.env.DELHIVERY_API_TOKEN}`,
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
     },
   }
 );
