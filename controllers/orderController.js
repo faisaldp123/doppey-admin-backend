@@ -44,22 +44,26 @@ export const createOrder = async (req, res) => {
         Number(codCharge);
 
     const order = await Order.create({
-      user: req.user._id,
+  user: req.user._id,
 
-      items,
+  items,
 
-      address,
+  address,
 
-      shipping,
+  shipping,
 
-      codCharge,
+  codCharge,
 
-      paymentMethod,
+  paymentMethod,
 
-      totalAmount: finalTotal,
+  totalAmount: finalTotal,
 
-      status: "Placed",
-    });
+  waybill: "",
+
+  trackingStatus: "Pending",
+
+  status: "Placed",
+});
 
     try {
   const shipment =
