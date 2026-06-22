@@ -14,6 +14,7 @@ export const createProduct = async (req, res) => {
       stock,
       category,
       subCategory,
+      video,
       brand,
       rating,
       sku,
@@ -47,7 +48,10 @@ export const createProduct = async (req, res) => {
       category,
       subCategory,
       images,
-      brand:        brand        || "",
+
+video: video || "",
+
+brand: brand || "",
       rating:       rating       || 0,
       sku:          sku          || "",
       discount:     discount     || 0,
@@ -72,6 +76,10 @@ export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = { ...req.body };
+
+if (updates.video === undefined) {
+  delete updates.video;
+}
 
     if (req.files && req.files.length > 0) {
       updates.images = req.files.map((file) => file.path);
@@ -120,8 +128,8 @@ export const deleteProduct = async (req, res) => {
 export const getAllProducts = async (req, res) => {
   try {
     const products = await Product.find()
-      .populate("category", "name")
-      .populate("subCategory", "name");
+       .populate("category", "name slug")
+      .populate("subCategory", "name slug");
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -134,8 +142,8 @@ export const getPublicProducts = async (req, res) => {
     const products = await Product.find({
       isActive: true,
     })
-      .populate("category", "name")
-      .populate("subCategory", "name");
+      .populate("category", "name slug")
+.populate("subCategory", "name slug")
 
     res.json(products);
   } catch (error) {
@@ -154,8 +162,8 @@ export const getProductsBySubCategory = async (req, res) => {
     if (!subCategory) return res.status(404).json({ message: "Subcategory not found" });
 
     const products = await Product.find({ subCategory: subCategory._id, isActive: true })
-      .populate("category", "name")
-      .populate("subCategory", "name");
+       .populate("category", "name slug")
+      .populate("subCategory", "name slug");
 
     res.json(products);
   } catch (error) {
@@ -167,8 +175,8 @@ export const getProductsBySubCategory = async (req, res) => {
 export const getProductBySlug = async (req, res) => {
   try {
     const product = await Product.findOne({ slug: req.params.slug, isActive: true })
-      .populate("category", "name")
-      .populate("subCategory", "name");
+       .populate("category", "name slug")
+      .populate("subCategory", "name slug");
 
     if (!product) return res.status(404).json({ message: "Product not found" });
 
@@ -182,8 +190,8 @@ export const getProductBySlug = async (req, res) => {
 export const getBestSellers = async (req, res) => {
   try {
     const products = await Product.find({ isBestSeller: true, isActive: true })
-      .populate("category", "name")
-      .populate("subCategory", "name");
+       .populate("category", "name slug")
+      .populate("subCategory", "name slug");
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -194,8 +202,8 @@ export const getBestSellers = async (req, res) => {
 export const getNewArrivals = async (req, res) => {
   try {
     const products = await Product.find({ isNewArrival: true, isActive: true })
-      .populate("category", "name")
-      .populate("subCategory", "name");
+      .populate("category", "name slug")
+      .populate("subCategory", "name slug");
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
