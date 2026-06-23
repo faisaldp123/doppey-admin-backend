@@ -15,7 +15,7 @@ const genOTP = (digits = 6) => {
 
 const signToken = (user) => {
   return jwt.sign(
-    { id: user._id, phone: user.phone, role: user.role },
+    { id: user._id, phone: user.phone, email: user.email, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
   );
@@ -231,4 +231,28 @@ export const getAllUsers = async (req, res) => {
     .sort({ createdAt: -1 });
 
   res.json(users);
+};
+
+export const googleLogin = async (req, res) => {
+  const { email, name = "", googleId = "", photo = "" } = req.body;
+  if (!email) return res.status(400).json({ message: "Google email is required" });
+
+  const user = await User.findOneAndUpdate(
+    { email: email.toLowerCase() },
+    { email: email.toLowerCase(), name, googleId, photo },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  const token = signToken(user);
+
+  res.json({
+    token,
+    user: {
+      id: user._id,
+      phone: user.phone,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    },
+  });
 };

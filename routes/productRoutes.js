@@ -25,8 +25,26 @@ router.get("/product/:slug",         getProductBySlug);
 /* ── ADMIN ── */
 router.get(   "/",   protect, adminOnly, getAllProducts);
 router.get("/public", getPublicProducts);
-router.post(  "/",   protect, adminOnly, upload.array("images", 10), createProduct);
-router.put(   "/:id", protect, adminOnly, upload.array("images", 10), updateProduct);
+router.post(
+  "/",
+  protect,
+  adminOnly,
+  upload.fields([
+    { name: "images", maxCount: 4 },
+    { name: "video", maxCount: 1 },
+  ]),
+  createProduct
+);
+router.put(
+  "/:id",
+  protect,
+  adminOnly,
+  upload.fields([
+    { name: "images", maxCount: 4 },
+    { name: "video", maxCount: 1 },
+  ]),
+  updateProduct
+);
 router.delete("/:id", protect, adminOnly, deleteProduct);
 
 export default router;

@@ -2,6 +2,7 @@ import express from "express";
 import {
   requestOTP,
   verifyOTP,
+  googleLogin,
   getProfile,
   addToWishlist,
   removeFromWishlist,
@@ -10,8 +11,6 @@ import {
   updateCartItem,
   removeFromCart,
   clearCart,
-  createOrder,
-  getMyOrders,
   getAllUsers
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
@@ -21,6 +20,7 @@ const router = express.Router();
 // Auth via phone OTP
 router.post("/request-otp", requestOTP);
 router.post("/verify-otp", verifyOTP);
+router.post("/google-login", googleLogin);
 
 // Protected user routes
 router.get("/profile", protect, getProfile);
@@ -37,8 +37,6 @@ router.post("/cart/remove", protect, removeFromCart);
 router.post("/cart/clear", protect, clearCart);
 
 // Orders
-router.post("/orders", protect, createOrder);
-router.get("/orders", protect, getMyOrders);
 
 // ✅ SIMPLE GET ALL USERS API
 router.get("/users", protect, getAllUsers);
