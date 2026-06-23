@@ -4,7 +4,7 @@ import slugify from "slugify";
 
 /* ================= ADMIN ================= */
 
-// Create Product (Admin) - Requires minimum 5 images
+// Create Product (Admin)
 export const createProduct = async (req, res) => {
   try {
     const {
@@ -14,7 +14,6 @@ export const createProduct = async (req, res) => {
       stock,
       category,
       subCategory,
-      video,
       brand,
       rating,
       sku,
@@ -33,11 +32,14 @@ export const createProduct = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    if (!req.files || req.files.length < 5) {
-      return res.status(400).json({ message: "Minimum 5 images required" });
+    const imageFiles = req.files?.images || [];
+    const videoFile = req.files?.video?.[0];
+
+    if (imageFiles.length < 1 || imageFiles.length > 4) {
+      return res.status(400).json({ message: "Upload 1 to 4 product images" });
     }
 
-    const images = req.files.map((file) => file.path);
+    const images = imageFiles.map((file) => file.path);
 
     const product = await Product.create({
       name,
@@ -49,7 +51,7 @@ export const createProduct = async (req, res) => {
       subCategory,
       images,
 
-video: video || "",
+      video: videoFile?.path || "",
 
 brand: brand || "",
       rating:       rating       || 0,
@@ -81,8 +83,15 @@ if (updates.video === undefined) {
   delete updates.video;
 }
 
-    if (req.files && req.files.length > 0) {
-      updates.images = req.files.map((file) => file.path);
+    const imageFiles = req.files?.images || [];
+    const videoFile = req.files?.video?.[0];
+
+    if (imageFiles.length > 0) {
+      updates.images = imageFiles.map((file) => file.path);
+    }
+
+    if (videoFile) {
+      updates.video = videoFile.path;
     }
 
     // Parse boolean strings from FormData

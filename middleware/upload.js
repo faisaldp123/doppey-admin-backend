@@ -3,11 +3,12 @@ import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
 
 const storage = new CloudinaryStorage({
-cloudinary,
-params: {
-folder: "doppey-products",
-allowed_formats: ["jpg", "jpeg", "png", "webp"],
-},
+  cloudinary,
+  params: async () => ({
+    folder: "doppey-products",
+    resource_type: "auto",
+    allowed_formats: ["jpg", "jpeg", "png", "webp", "mp4", "mov", "webm"],
+  }),
 });
 
 export const upload = multer({

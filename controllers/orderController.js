@@ -1,5 +1,5 @@
 import Order from "../models/Order.js";
-import { createDelhiveryShipment } from "../services/delhiveryService.js";
+import { createBlueDartShipment } from "../services/bluedartService.js"; // ← ADD THIS IMPORT
 
 /* ================= USER ================= */
 
@@ -16,104 +16,77 @@ export const createOrder = async (req, res) => {
     } = req.body;
 
     if (!items || items.length === 0) {
-      return res
-        .status(400)
-        .json({
-          message: "No items in order",
-        });
+      return res.status(400).json({ message: "No items in order" });
     }
 
     if (!address || !address.fullName) {
-      return res
-        .status(400)
-        .json({
-          message: "Address required",
-        });
+      return res.status(400).json({ message: "Address required" });
     }
 
     const itemsTotal = items.reduce(
-      (sum, item) =>
-        sum + item.price * item.quantity,
+      (sum, item) => sum + item.price * item.quantity,
       0
     );
 
     const finalTotal =
-      total ||
-      itemsTotal +
-        Number(shipping) +
-        Number(codCharge);
+      total || itemsTotal + Number(shipping) + Number(codCharge);
 
     const order = await Order.create({
-  user: req.user._id,
+      user:           req.user._id,
+      items,
+      address,
+      shipping,
+      codCharge,
+      paymentMethod,
+      totalAmount:    finalTotal,
+      waybill:        "",
+      trackingStatus: "Pending",
+      status:         "Placed",
+    });
 
-  items,
-
-  address,
-
-  shipping,
-
-  codCharge,
-
-  paymentMethod,
-
-  totalAmount: finalTotal,
-
-  waybill: "",
-
-  trackingStatus: "Pending",
-
-  status: "Placed",
-});
-
+    // ← BLUEDART INTEGRATION ADDED HERE
     try {
-  const shipment =
-    await createDelhiveryShipment(order);
+      const shipment = await createBlueDartShipment(order);
 
-  console.log(
-    "DELHIVERY RESPONSE:"
-  );
+      console.log("BLUEDART RESPONSE:", shipment);
 
-  console.log(shipment);
+      const waybill =
+        shipment?.ShipmentNumber ||
+        shipment?.AWBNo          ||
+        shipment?.waybillNo      ||
+        "";
 
-  if (shipment?.packages?.[0]?.waybill) {
-    order.waybill =
-      shipment.packages[0].waybill;
-
-    order.trackingStatus =
-      "Created";
-
-    await order.save();
-  }
-} catch (err) {
-  console.log(
-    "DELHIVERY SHIPMENT FAILED"
-  );
-
-  console.log(
-    err.response?.data || err.message
-  );
-}
+      if (waybill) {
+        order.waybill        = waybill;
+        order.trackingStatus = "Created";
+        await order.save();
+      }
+    } catch (err) {
+      // BlueDart failure does NOT block the order
+      // Order is already saved to MongoDB above
+      console.error("BLUEDART FAILED:", err.response?.data || err.message);
+    }
 
     res.status(201).json({
       success: true,
       order,
     });
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: error.message,
-    });
+    console.error("CREATE ORDER ERROR:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
 // GET MY ORDERS
 export const getMyOrders = async (req, res) => {
-  const orders = await Order.find({ user: req.user._id })
-    .populate("items.product", "name price")
-    .sort({ createdAt: -1 });
-
-  res.json(orders);
+  try {
+    const orders = await Order.find({ user: req.user._id })
+      .populate("items.product", "name price images")
+      .sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // GET ORDER BY ID
@@ -126,13 +99,15 @@ export const getOrderById = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    if (!req.user.isAdmin && order.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized to view this order" });
+    if (
+      !req.user.isAdmin &&
+      order.user.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     res.json(order);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -141,25 +116,29 @@ export const getOrderById = async (req, res) => {
 
 // GET ALL ORDERS
 export const getAllOrders = async (req, res) => {
-  const orders = await Order.find()
-    .populate("user", "phone")
-    .populate("items.product", "name price")
-    .sort({ createdAt: -1 });
-
-  res.json(orders);
+  try {
+    const orders = await Order.find()
+      .populate("user", "phone")
+      .populate("items.product", "name price images")
+      .sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // UPDATE ORDER STATUS
 export const updateOrderStatus = async (req, res) => {
-  const { status } = req.body;
-
-  const order = await Order.findById(req.params.id);
-  if (!order) {
-    return res.status(404).json({ message: "Order not found" });
+  try {
+    const { status } = req.body;
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+    order.status = status;
+    await order.save();
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-
-  order.status = status;
-  await order.save();
-
-  res.json(order);
 };

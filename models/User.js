@@ -7,7 +7,9 @@ const cartItemSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema({
   name: { type: String, default: "" },
-  phone: { type: String, required: true, unique: true },
+  phone: { type: String, unique: true, sparse: true },
+  email: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
+  googleId: { type: String, unique: true, sparse: true },
   isAdmin: { type: Boolean, default: false },
   role: {
   type: String,
