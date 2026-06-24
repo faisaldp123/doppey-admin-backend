@@ -51,6 +51,7 @@ export const createOrder = async (req, res) => {
       console.log("BLUEDART RESPONSE:", shipment);
 
       const waybill =
+        shipment?.waybill        ||
         shipment?.ShipmentNumber ||
         shipment?.AWBNo          ||
         shipment?.waybillNo      ||

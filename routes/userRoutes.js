@@ -4,6 +4,7 @@ import {
   verifyOTP,
   googleLogin,
   getProfile,
+  getWishlist,
   addToWishlist,
   removeFromWishlist,
   getCart,
@@ -26,6 +27,8 @@ router.post("/google-login", googleLogin);
 router.get("/profile", protect, getProfile);
 
 // Wishlist
+router.get("/wishlist", protect, getWishlist);
+router.post("/wishlist", protect, addToWishlist);
 router.post("/wishlist/add", protect, addToWishlist);
 router.post("/wishlist/remove", protect, removeFromWishlist);
 
