@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
+import axios from "axios";
 
 /* ================= OTP HELPERS ================= */
 
@@ -12,6 +13,15 @@ const genOTP = (digits = 6) => {
     10 ** (digits - 1);
   return String(num);
 };
+
+const normalizeIndianPhone = (phone = "") => {
+  const digits = String(phone).replace(/\D/g, "");
+  if (digits.length === 10) return digits;
+  if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
+  return "";
+};
+
+const formatMsg91Mobile = (phone = "") => `91${phone}`;
 
 const signToken = (user) => {
   return jwt.sign(
@@ -24,9 +34,44 @@ const signToken = (user) => {
 /* ================= AUTH ================= */
 
 export const requestOTP = async (req, res) => {
-  const { phone } = req.body;
-  if (!phone) return res.status(400).json({ message: "Phone is required" });
+  const phone = normalizeIndianPhone(req.body.phone);
+  if (!phone) {
+    return res.status(400).json({ message: "Valid 10-digit phone is required" });
+  }
 
+  const authKey = process.env.MSG91_AUTH_KEY;
+  const templateId = process.env.MSG91_TEMPLATE_ID;
+
+  if (authKey && templateId) {
+    try {
+      const formattedPhone = formatMsg91Mobile(phone);
+      await axios.post(`https://control.msg91.com/api/v5/otp`, {}, {
+        params: {
+          template_id: templateId,
+          mobile: formattedPhone,
+          authkey: authKey,
+        },
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log(`MSG91 OTP sent to ${formattedPhone}`);
+      
+      // Upsert the user so they exist in database
+      await User.findOneAndUpdate(
+        { phone },
+        { phone },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      
+      return res.json({ message: "OTP sent via MSG91" });
+    } catch (err) {
+      console.error("MSG91 OTP send failed:", err.response?.data || err.message);
+      return res.status(500).json({ message: "Failed to send OTP via MSG91" });
+    }
+  }
+
+  // Development Fallback flow
   const otp = genOTP(6);
   const otpExpiresMin = parseInt(process.env.OTP_EXPIRES_MIN || "10", 10);
   const otpExpiresAt = new Date(Date.now() + otpExpiresMin * 60 * 1000);
@@ -37,16 +82,58 @@ export const requestOTP = async (req, res) => {
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
-  console.log(`OTP for ${phone}: ${otp}`);
+  console.log(`[DEVELOPMENT FALLBACK] OTP for ${phone}: ${otp}`);
 
   res.json({ message: "OTP sent" });
 };
 
 export const verifyOTP = async (req, res) => {
-  const { phone, otp } = req.body;
+  const phone = normalizeIndianPhone(req.body.phone);
+  const { otp } = req.body;
   if (!phone || !otp)
-    return res.status(400).json({ message: "Phone and OTP required" });
+    return res.status(400).json({ message: "Valid phone and OTP required" });
 
+  const authKey = process.env.MSG91_AUTH_KEY;
+
+  if (authKey) {
+    try {
+      const formattedPhone = formatMsg91Mobile(phone);
+      const response = await axios.get(`https://control.msg91.com/api/v5/otp/verify`, {
+        params: {
+          otp,
+          mobile: formattedPhone,
+        },
+        headers: {
+          authkey: authKey,
+        }
+      });
+
+      if (response.data?.type !== "success") {
+        return res.status(400).json({ message: response.data?.message || "Invalid OTP" });
+      }
+    } catch (err) {
+      console.error("MSG91 OTP verification failed:", err.response?.data || err.message);
+      return res.status(400).json({ message: "OTP verification failed or expired" });
+    }
+
+    let user = await User.findOne({ phone });
+    if (!user) {
+      user = await User.create({ phone });
+    }
+
+    const token = signToken(user);
+
+    return res.json({
+      token,
+      user: {
+        id: user._id,
+        phone: user.phone,
+        role: user.role,
+      },
+    });
+  }
+
+  // Development Fallback verification
   const user = await User.findOne({ phone });
   if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -82,32 +169,48 @@ export const verifyOTP = async (req, res) => {
 /* ================= PROFILE ================= */
 
 export const getProfile = async (req, res) => {
-  const user = await User.findById(req.user._id).populate({
-    path: "cart.product wishlist orders",
-    populate: { path: "product", model: "Product" },
-  });
+  const user = await User.findById(req.user._id)
+    .populate("cart.product")
+    .populate("wishlist")
+    .populate({
+      path: "orders",
+      populate: { path: "items.product", model: "Product" },
+    });
 
   res.json(user);
 };
 
 /* ================= WISHLIST ================= */
 
+export const getWishlist = async (req, res) => {
+  const user = await User.findById(req.user._id).populate("wishlist");
+  res.json(user?.wishlist || []);
+};
+
 export const addToWishlist = async (req, res) => {
   const { productId } = req.body;
-  const user = await User.findById(req.user._id);
-
-  if (user.wishlist.includes(productId)) {
-    return res.status(400).json({ message: "Already in wishlist" });
+  if (!productId) {
+    return res.status(400).json({ message: "Product is required" });
   }
 
-  user.wishlist.push(productId);
-  await user.save();
+  const user = await User.findById(req.user._id);
 
-  res.json({ message: "Added to wishlist", wishlist: user.wishlist });
+  if (!user.wishlist.some((id) => id.toString() === productId)) {
+    user.wishlist.push(productId);
+    await user.save();
+  }
+
+  const updatedUser = await User.findById(req.user._id).populate("wishlist");
+
+  res.json({ message: "Added to wishlist", wishlist: updatedUser.wishlist });
 };
 
 export const removeFromWishlist = async (req, res) => {
   const { productId } = req.body;
+  if (!productId) {
+    return res.status(400).json({ message: "Product is required" });
+  }
+
   const user = await User.findById(req.user._id);
 
   user.wishlist = user.wishlist.filter(
@@ -115,7 +218,9 @@ export const removeFromWishlist = async (req, res) => {
   );
   await user.save();
 
-  res.json({ message: "Removed from wishlist", wishlist: user.wishlist });
+  const updatedUser = await User.findById(req.user._id).populate("wishlist");
+
+  res.json({ message: "Removed from wishlist", wishlist: updatedUser.wishlist });
 };
 
 /* ================= CART ================= */
@@ -204,7 +309,8 @@ export const createOrder = async (req, res) => {
     phone: req.user.phone,
   });
 
-  const user = await User.findById(req.user._id);
+  const user = await User.findById(req.user._id)
+  .populate("wishlist");
   user.orders.push(order._id);
   user.cart = [];
   await user.save();
