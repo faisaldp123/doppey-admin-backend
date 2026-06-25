@@ -20,11 +20,45 @@ const returnSchema = new mongoose.Schema({
   comment: { type: String, default: "" },
   images:  { type: [String], default: [] },
   status: {
-    type: String,
-    enum: ["Pending", "Approved", "Rejected", "In Transit", "Completed"],
-    default: "Pending",
-  },
-  expectedDeliveryDate: Date,
+  type: String,
+  enum: [
+    "Pending",
+    "Approved",
+    "Pickup Scheduled",
+    "Picked Up",
+    "Quality Check",
+    "Refund Approved",
+    "Refund Completed",
+    "Rejected",
+  ],
+  default: "Pending",
+},
+
+expectedDeliveryDate: Date,
+
+refundAmount: {
+  type: Number,
+  default: 0,
+},
+
+refundMethod: {
+  type: String,
+  default: "",
+},
+
+refundTransactionId: {
+  type: String,
+  default: "",
+},
+
+refundDate: {
+  type: Date,
+},
+
+adminRemark: {
+  type: String,
+  default: "",
+},
 }, { timestamps: true });
 
 export default mongoose.model("Return", returnSchema);
