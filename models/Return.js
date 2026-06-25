@@ -1,16 +1,30 @@
 import mongoose from "mongoose";
 
 const returnSchema = new mongoose.Schema({
-  orderId: String,
-  product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
-  reason: String,
+  orderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Order",
+    required: true,
+  },
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product",
+    required: true,
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  reason:  { type: String, required: true },
+  comment: { type: String, default: "" },
+  images:  { type: [String], default: [] },
   status: {
     type: String,
-    enum: ["In Transit", "Out For Delivery", "Delivered", "Lost", "Disposed"],
-    default: "In Transit"
+    enum: ["Pending", "Approved", "Rejected", "In Transit", "Completed"],
+    default: "Pending",
   },
   expectedDeliveryDate: Date,
-  createdAt: { type: Date, default: Date.now }
-});
+}, { timestamps: true });
 
 export default mongoose.model("Return", returnSchema);
