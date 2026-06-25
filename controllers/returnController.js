@@ -6,9 +6,10 @@ import { v2 as cloudinary } from "cloudinary";
 export const getAllReturns = async (req, res) => {
   try {
     const returns = await Return.find()
-      .populate("product")
-      .populate("orderId")
-      .sort({ createdAt: -1 });
+  .populate("product")
+  .populate("orderId")
+  .populate("user", "name phone email")
+  .sort({ createdAt: -1 });
     res.json(returns);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -31,12 +32,30 @@ export const getMyReturns = async (req, res) => {
 export const getReturnById = async (req, res) => {
   try {
     const ret = await Return.findById(req.params.id)
-      .populate("product")
-      .populate("orderId");
-    if (!ret) return res.status(404).json({ message: "Return not found" });
+      .populate({
+        path: "product",
+        select: "name price images",
+      })
+      .populate({
+        path: "orderId",
+      })
+      .populate({
+        path: "user",
+        select: "name phone email",
+      });
+
+    if (!ret) {
+      return res.status(404).json({
+        message: "Return not found",
+      });
+    }
+
     res.json(ret);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({
+      message: err.message,
+    });
   }
 };
 
@@ -78,12 +97,27 @@ export const createReturn = async (req, res) => {
 // PUT update return status (admin)
 export const updateReturnStatus = async (req, res) => {
   try {
-    const { status } = req.body;
-    const ret = await Return.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+    const {
+  status,
+  adminRemark,
+  refundAmount,
+  refundMethod,
+  refundTransactionId,
+  refundDate,
+} = req.body;
+
+const ret = await Return.findByIdAndUpdate(
+  req.params.id,
+  {
+    status,
+    adminRemark,
+    refundAmount,
+    refundMethod,
+    refundTransactionId,
+    refundDate,
+  },
+  { new: true }
+);
     if (!ret) return res.status(404).json({ message: "Return not found" });
     res.json(ret);
   } catch (err) {
