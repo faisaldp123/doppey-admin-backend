@@ -2,8 +2,10 @@ import express from "express";
 import {
   requestOTP,
   verifyOTP,
+  verifyFirebaseOTP,
   googleLogin,
   getProfile,
+  updateProfile,
   getWishlist,
   addToWishlist,
   removeFromWishlist,
@@ -21,10 +23,12 @@ const router = express.Router();
 // Auth via phone OTP
 router.post("/request-otp", requestOTP);
 router.post("/verify-otp", verifyOTP);
+router.post("/verify-firebase-otp", verifyFirebaseOTP);
 router.post("/google-login", googleLogin);
 
 // Protected user routes
 router.get("/profile", protect, getProfile);
+router.put("/profile", protect, updateProfile);
 
 // Wishlist
 router.get("/wishlist", protect, getWishlist);

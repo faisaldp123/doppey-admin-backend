@@ -3,6 +3,20 @@ import axios from "axios";
 const DEFAULT_BLUEDART_API_URL =
   "https://apigateway.bluedart.com/in/transportation/waybill/v1/GenerateWayBill";
 
+const getBlueDartHeaders = () => {
+  const headers = {
+    "Content-Type": "application/json",
+  };
+
+  if (process.env.BLUEDART_JWT_TOKEN) headers.JWTToken = process.env.BLUEDART_JWT_TOKEN;
+  if (process.env.BLUEDART_API_KEY) headers.ApiKey = process.env.BLUEDART_API_KEY;
+  if (process.env.BLUEDART_CLIENT_ID) headers.ClientID = process.env.BLUEDART_CLIENT_ID;
+  if (process.env.BLUEDART_CLIENT_SECRET) headers.ClientSecret = process.env.BLUEDART_CLIENT_SECRET;
+  if (process.env.BLUEDART_API_SECRET) headers.ApiSecret = process.env.BLUEDART_API_SECRET;
+
+  return headers;
+};
+
 export const extractBlueDartWaybill = (data) => {
   const direct =
     data?.waybill ||
@@ -49,6 +63,20 @@ export const createBlueDartShipment = async (order) => {
       console.log(
         "BLUEDART: Missing License Key, Login ID or Customer Code"
       );
+      return null;
+    }
+
+    const missingAddress = [
+      "fullName",
+      "street",
+      "pincode",
+      "phone",
+      "city",
+      "state",
+    ].filter((field) => !order.address?.[field]);
+
+    if (missingAddress.length) {
+      console.log(`BLUEDART: Missing address fields: ${missingAddress.join(", ")}`);
       return null;
     }
 
@@ -131,15 +159,7 @@ export const createBlueDartShipment = async (order) => {
         DEFAULT_BLUEDART_API_URL,
       payload,
       {
-        headers: {
-          "Content-Type": "application/json",
-          ...(process.env.BLUEDART_JWT_TOKEN
-            ? {
-                JWTToken:
-                  process.env.BLUEDART_JWT_TOKEN,
-              }
-            : {}),
-        },
+        headers: getBlueDartHeaders(),
         timeout: 30000,
       }
     );

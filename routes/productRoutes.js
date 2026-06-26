@@ -30,7 +30,7 @@ router.post(
   protect,
   adminOnly,
   upload.fields([
-    { name: "images", maxCount: 4 },
+    { name: "images", maxCount: 5 },
     { name: "video", maxCount: 1 },
   ]),
   createProduct
@@ -40,7 +40,7 @@ router.put(
   protect,
   adminOnly,
   upload.fields([
-    { name: "images", maxCount: 4 },
+    { name: "images", maxCount: 5 },
     { name: "video", maxCount: 1 },
   ]),
   updateProduct

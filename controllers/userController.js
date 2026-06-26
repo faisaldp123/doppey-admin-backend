@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import axios from "axios";
+import admin from "firebase-admin";
 
 /* ================= OTP HELPERS ================= */
 
@@ -29,6 +30,24 @@ const signToken = (user) => {
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
   );
+};
+
+const getFirebaseAdmin = () => {
+  if (admin.apps.length) return admin.app();
+
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+
+  if (!projectId || !clientEmail || !privateKey) return null;
+
+  return admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId,
+      clientEmail,
+      privateKey,
+    }),
+  });
 };
 
 /* ================= AUTH ================= */
@@ -166,6 +185,51 @@ export const verifyOTP = async (req, res) => {
   });
 };
 
+export const verifyFirebaseOTP = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ message: "Firebase ID token is required" });
+    }
+
+    const firebaseApp = getFirebaseAdmin();
+    if (!firebaseApp) {
+      return res.status(500).json({
+        message: "Firebase Admin is not configured on backend",
+      });
+    }
+
+    const decoded = await firebaseApp.auth().verifyIdToken(idToken);
+    const phone = normalizeIndianPhone(decoded.phone_number || "");
+
+    if (!phone) {
+      return res.status(400).json({ message: "Firebase token does not include a valid phone number" });
+    }
+
+    const user = await User.findOneAndUpdate(
+      { phone },
+      { phone },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    const token = signToken(user);
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        phone: user.phone,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("FIREBASE OTP VERIFY FAILED:", err.message);
+    res.status(401).json({ message: "Firebase OTP verification failed" });
+  }
+};
+
 /* ================= PROFILE ================= */
 
 export const getProfile = async (req, res) => {
@@ -178,6 +242,34 @@ export const getProfile = async (req, res) => {
     });
 
   res.json(user);
+};
+
+export const updateProfile = async (req, res) => {
+  const updates = {};
+
+  if (req.body.name !== undefined) updates.name = String(req.body.name).trim();
+  if (req.body.email !== undefined) updates.email = String(req.body.email).toLowerCase().trim();
+  if (req.body.phone !== undefined) {
+    updates.phone = normalizeIndianPhone(req.body.phone);
+    if (!updates.phone) {
+      return res.status(400).json({ message: "Valid 10-digit phone is required" });
+    }
+  }
+
+  const user = await User.findByIdAndUpdate(req.user._id, updates, {
+    new: true,
+    runValidators: true,
+  }).select("-otp -otpExpiresAt");
+
+  res.json({
+    user: {
+      id: user._id,
+      name: user.name,
+      phone: user.phone,
+      email: user.email,
+      role: user.role,
+    },
+  });
 };
 
 /* ================= WISHLIST ================= */

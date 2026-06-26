@@ -28,9 +28,9 @@ const productSchema = new mongoose.Schema(
       type: [String],
       validate: {
         validator: function (v) {
-          return v.length > 0 && v.length <= 4;
+          return v.length > 0 && v.length <= 5;
         },
-        message: "Upload 1 to 4 product images",
+        message: "Upload 1 to 5 product images",
       },
     },
 
