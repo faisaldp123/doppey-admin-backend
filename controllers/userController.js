@@ -244,32 +244,50 @@ export const getProfile = async (req, res) => {
   res.json(user);
 };
 
+
 export const updateProfile = async (req, res) => {
-  const updates = {};
+  try {
+    const { name, email, phone } = req.body;
 
-  if (req.body.name !== undefined) updates.name = String(req.body.name).trim();
-  if (req.body.email !== undefined) updates.email = String(req.body.email).toLowerCase().trim();
-  if (req.body.phone !== undefined) {
-    updates.phone = normalizeIndianPhone(req.body.phone);
-    if (!updates.phone) {
-      return res.status(400).json({ message: "Valid 10-digit phone is required" });
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
     }
+
+    // check duplicate email
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({
+        email,
+        _id: { $ne: user._id },
+      });
+
+      if (existingUser) {
+        return res.status(400).json({
+          message: "Email already exists",
+        });
+      }
+    }
+
+    user.name = name || user.name;
+    user.email = email || user.email;
+    user.phone = phone || user.phone;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: err.message,
+    });
   }
-
-  const user = await User.findByIdAndUpdate(req.user._id, updates, {
-    new: true,
-    runValidators: true,
-  }).select("-otp -otpExpiresAt");
-
-  res.json({
-    user: {
-      id: user._id,
-      name: user.name,
-      phone: user.phone,
-      email: user.email,
-      role: user.role,
-    },
-  });
 };
 
 /* ================= WISHLIST ================= */
