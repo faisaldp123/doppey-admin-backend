@@ -1,5 +1,16 @@
 import Banner from "../models/Banner.js";
 
+const parseJsonArray = (value, fallback = []) => {
+  if (!value) return fallback;
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export const getPublicBanners = async (req, res) => {
   try {
     const banners = await Banner.find({ isActive: true }).sort({ order: 1 });
@@ -23,8 +34,8 @@ export const createBanner = async (req, res) => {
     const { videoHref, isActive, order } = req.body;
 
     // Parse per-image hrefs sent as JSON strings
-    const desktopHrefs = req.body.desktopHrefs ? JSON.parse(req.body.desktopHrefs) : [];
-    const mobileHrefs  = req.body.mobileHrefs  ? JSON.parse(req.body.mobileHrefs)  : [];
+    const desktopHrefs = parseJsonArray(req.body.desktopHrefs);
+    const mobileHrefs  = parseJsonArray(req.body.mobileHrefs);
 
     const desktopFiles = req.files?.desktopImages || [];
     const mobileFiles  = req.files?.mobileImages  || [];
@@ -63,18 +74,31 @@ export const updateBanner = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = {};
+    const existing = await Banner.findById(id);
+
+    if (!existing) return res.status(404).json({ message: "Banner not found" });
 
     if (req.body.order     !== undefined) updates.order     = req.body.order;
     if (req.body.videoHref !== undefined) updates.videoHref = req.body.videoHref;
     if (req.body.isActive  !== undefined) updates.isActive  = req.body.isActive === "true";
 
-    const desktopHrefs = req.body.desktopHrefs ? JSON.parse(req.body.desktopHrefs) : [];
-    const mobileHrefs  = req.body.mobileHrefs  ? JSON.parse(req.body.mobileHrefs)  : [];
+    const desktopHrefs = parseJsonArray(req.body.desktopHrefs);
+    const mobileHrefs  = parseJsonArray(req.body.mobileHrefs);
+    const existingDesktopUrls = parseJsonArray(req.body.existingDesktopUrls);
+    const existingMobileUrls  = parseJsonArray(req.body.existingMobileUrls);
 
     if (req.files?.desktopImages?.length > 0) {
       updates.desktopImages = req.files.desktopImages.map((f, i) => ({
         url:  f.path,
         href: desktopHrefs[i] || "/shop",
+      }));
+    } else if (desktopHrefs.length || existingDesktopUrls.length) {
+      const source = existingDesktopUrls.length
+        ? existingDesktopUrls
+        : existing.desktopImages.map((img) => img.url);
+      updates.desktopImages = source.slice(0, 4).map((url, i) => ({
+        url,
+        href: desktopHrefs[i] || existing.desktopImages[i]?.href || "/shop",
       }));
     }
 
@@ -83,6 +107,14 @@ export const updateBanner = async (req, res) => {
         url:  f.path,
         href: mobileHrefs[i] || "/shop",
       }));
+    } else if (mobileHrefs.length || existingMobileUrls.length) {
+      const source = existingMobileUrls.length
+        ? existingMobileUrls
+        : existing.mobileImages.map((img) => img.url);
+      updates.mobileImages = source.slice(0, 4).map((url, i) => ({
+        url,
+        href: mobileHrefs[i] || existing.mobileImages[i]?.href || "/shop",
+      }));
     }
 
     if (req.files?.video?.[0]) {
@@ -90,7 +122,6 @@ export const updateBanner = async (req, res) => {
     }
 
     const banner = await Banner.findByIdAndUpdate(id, updates, { new: true });
-    if (!banner) return res.status(404).json({ message: "Banner not found" });
 
     res.json(banner);
   } catch (err) {

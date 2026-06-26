@@ -35,8 +35,8 @@ export const createProduct = async (req, res) => {
     const imageFiles = req.files?.images || [];
     const videoFile = req.files?.video?.[0];
 
-    if (imageFiles.length < 1 || imageFiles.length > 4) {
-      return res.status(400).json({ message: "Upload 1 to 4 product images" });
+    if (imageFiles.length < 1 || imageFiles.length > 5) {
+      return res.status(400).json({ message: "Upload 1 to 5 product images" });
     }
 
     const images = imageFiles.map((file) => file.path);
