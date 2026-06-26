@@ -29,7 +29,16 @@ export const createOrder = async (req, res) => {
     );
 
     const finalTotal =
-      total || itemsTotal + Number(shipping) + Number(codCharge);
+  itemsTotal +
+  Number(shipping || 0) +
+  Number(codCharge || 0);
+
+  console.log("ORDER ITEMS:", items);
+console.log("ITEMS TOTAL:", itemsTotal);
+console.log("SHIPPING:", shipping);
+console.log("COD:", codCharge);
+console.log("FRONTEND TOTAL:", total);
+console.log("FINAL TOTAL:", finalTotal);
 
     const order = await Order.create({
       user:           req.user._id,
