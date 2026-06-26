@@ -3,19 +3,34 @@ import axios from "axios";
 const DEFAULT_BLUEDART_API_URL =
   "https://apigateway.bluedart.com/in/transportation/waybill/v1/GenerateWayBill";
 
-const getBlueDartHeaders = () => {
-  const headers = {
-    "Content-Type": "application/json",
-  };
+/* ================= GET JWT TOKEN ================= */
 
-  if (process.env.BLUEDART_JWT_TOKEN) headers.JWTToken = process.env.BLUEDART_JWT_TOKEN;
-  if (process.env.BLUEDART_API_KEY) headers.ApiKey = process.env.BLUEDART_API_KEY;
-  if (process.env.BLUEDART_CLIENT_ID) headers.ClientID = process.env.BLUEDART_CLIENT_ID;
-  if (process.env.BLUEDART_CLIENT_SECRET) headers.ClientSecret = process.env.BLUEDART_CLIENT_SECRET;
-  if (process.env.BLUEDART_API_SECRET) headers.ApiSecret = process.env.BLUEDART_API_SECRET;
+async function getBlueDartToken() {
+  try {
+    const response = await axios.get(
+      "https://apigateway.bluedart.com/in/transportation/token/v1/login",
+      {
+        auth: {
+          username: process.env.BLUEDART_LOGIN_ID,
+          password: process.env.BLUEDART_LICENSE_KEY,
+        },
+      }
+    );
 
-  return headers;
-};
+    console.log("BLUEDART TOKEN GENERATED");
+
+    return response.data.JWTToken;
+  } catch (error) {
+    console.error(
+      "BLUEDART TOKEN ERROR:",
+      error.response?.data || error.message
+    );
+
+    throw error;
+  }
+}
+
+/* ================= EXTRACT AWB ================= */
 
 export const extractBlueDartWaybill = (data) => {
   const direct =
@@ -38,7 +53,8 @@ export const extractBlueDartWaybill = (data) => {
   for (const [key, value] of Object.entries(data)) {
     if (
       value &&
-      (typeof value === "string" || typeof value === "number") &&
+      (typeof value === "string" ||
+        typeof value === "number") &&
       /(awb|waybill|shipment)/i.test(key)
     ) {
       return String(value);
@@ -46,6 +62,7 @@ export const extractBlueDartWaybill = (data) => {
 
     if (value && typeof value === "object") {
       const nested = extractBlueDartWaybill(value);
+
       if (nested) return nested;
     }
   }
@@ -53,7 +70,11 @@ export const extractBlueDartWaybill = (data) => {
   return "";
 };
 
-export const createBlueDartShipment = async (order) => {
+/* ================= CREATE SHIPMENT ================= */
+
+export const createBlueDartShipment = async (
+  order
+) => {
   try {
     if (
       !process.env.BLUEDART_LICENSE_KEY ||
@@ -61,8 +82,9 @@ export const createBlueDartShipment = async (order) => {
       !process.env.BLUEDART_CUSTOMER_CODE
     ) {
       console.log(
-        "BLUEDART: Missing License Key, Login ID or Customer Code"
+        "BLUEDART: Missing credentials"
       );
+
       return null;
     }
 
@@ -73,118 +95,198 @@ export const createBlueDartShipment = async (order) => {
       "phone",
       "city",
       "state",
-    ].filter((field) => !order.address?.[field]);
+    ].filter(
+      (field) => !order.address?.[field]
+    );
 
     if (missingAddress.length) {
-      console.log(`BLUEDART: Missing address fields: ${missingAddress.join(", ")}`);
+      console.log(
+        `BLUEDART: Missing address fields: ${missingAddress.join(
+          ", "
+        )}`
+      );
+
       return null;
     }
+
+    const token = await getBlueDartToken();
+
+    console.log(
+      "BLUEDART JWT:",
+      token.substring(0, 20) + "..."
+    );
 
     const payload = {
       Request: {
         Consignee: {
-          ConsigneeName: order.address.fullName,
-          ConsigneeAddress1: order.address.street,
+          ConsigneeName:
+            order.address.fullName,
+          ConsigneeAddress1:
+            order.address.street,
           ConsigneeAddress2: "",
-          ConsigneePincode: order.address.pincode,
-          ConsigneeMobile: order.address.phone,
-          ConsigneeCity: order.address.city,
-          ConsigneeState: order.address.state,
+          ConsigneePincode:
+            order.address.pincode,
+          ConsigneeMobile:
+            order.address.phone,
+          ConsigneeCity:
+            order.address.city,
+          ConsigneeState:
+            order.address.state,
           ConsigneeCountry: "India",
         },
 
         Shipper: {
-          OriginArea: process.env.BLUEDART_ORIGIN_AREA || "GGN",
-          CustomerCode: process.env.BLUEDART_CUSTOMER_CODE,
+          OriginArea:
+            process.env
+              .BLUEDART_ORIGIN_AREA ||
+            "GGN",
+
+          CustomerCode:
+            process.env
+              .BLUEDART_CUSTOMER_CODE,
+
           CustomerName:
-            process.env.BLUEDART_CUSTOMER_NAME || "Doppey",
+            process.env
+              .BLUEDART_CUSTOMER_NAME ||
+            "Doppey",
         },
 
         Services: {
           ProductCode:
-            process.env.BLUEDART_PRODUCT_CODE || "A",
+            process.env
+              .BLUEDART_PRODUCT_CODE ||
+            "A",
 
           PaymentMode:
-            order.paymentMethod === "cod"
+            order.paymentMethod ===
+            "cod"
               ? "COD"
               : "Prepaid",
 
           CollectableAmount:
-            order.paymentMethod === "cod"
-              ? Number(order.totalAmount)
+            order.paymentMethod ===
+            "cod"
+              ? Number(
+                  order.totalAmount
+                )
               : 0,
 
-          DeclaredValue: Number(order.totalAmount),
+          DeclaredValue: Number(
+            order.totalAmount
+          ),
 
           PieceCount: "1",
 
           Weight:
-            process.env.BLUEDART_DEFAULT_WEIGHT || "0.5",
+            process.env
+              .BLUEDART_DEFAULT_WEIGHT ||
+            "0.5",
 
           Dimensions: {
             Length: Number(
-              process.env.BLUEDART_LENGTH || 30
+              process.env
+                .BLUEDART_LENGTH ||
+                30
             ),
+
             Breadth: Number(
-              process.env.BLUEDART_BREADTH || 20
+              process.env
+                .BLUEDART_BREADTH ||
+                20
             ),
+
             Height: Number(
-              process.env.BLUEDART_HEIGHT || 10
+              process.env
+                .BLUEDART_HEIGHT ||
+                10
             ),
           },
         },
 
         SubShipper: {
           SubShipperCode:
-            process.env.BLUEDART_SUB_SHIPPER_CODE ||
-            process.env.BLUEDART_CUSTOMER_CODE,
+            process.env
+              .BLUEDART_SUB_SHIPPER_CODE ||
+            process.env
+              .BLUEDART_CUSTOMER_CODE,
         },
       },
 
       Profile: {
-        LoginID: process.env.BLUEDART_LOGIN_ID,
-        LicenceKey: process.env.BLUEDART_LICENSE_KEY,
+        LoginID:
+          process.env
+            .BLUEDART_LOGIN_ID,
+
+        LicenceKey:
+          process.env
+            .BLUEDART_LICENSE_KEY,
+
         Api_type: "S",
+
         Version: "1.3",
       },
     };
 
     console.log(
       "BLUEDART REQUEST:",
-      JSON.stringify(payload, null, 2)
+      JSON.stringify(
+        payload,
+        null,
+        2
+      )
     );
 
-    const response = await axios.post(
-      process.env.BLUEDART_API_URL ||
-        DEFAULT_BLUEDART_API_URL,
-      payload,
-      {
-        headers: getBlueDartHeaders(),
-        timeout: 30000,
-      }
-    );
+    const response =
+      await axios.post(
+        process.env
+          .BLUEDART_API_URL ||
+          DEFAULT_BLUEDART_API_URL,
+
+        payload,
+
+        {
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            JWTToken: token,
+          },
+
+          timeout: 30000,
+        }
+      );
 
     console.log(
       "BLUEDART RESPONSE:",
       response.data
     );
 
+    const waybill =
+      extractBlueDartWaybill(
+        response.data
+      );
+
+    console.log(
+      "EXTRACTED WAYBILL:",
+      waybill
+    );
+
     return {
       raw: response.data,
-      waybill: extractBlueDartWaybill(
-        response.data
-      ),
+      waybill,
     };
   } catch (error) {
     console.error(
       "BLUEDART ERROR:",
-      error.response?.data || error.message
+      error.response?.data ||
+        error.message
     );
 
     return {
       error: true,
       message:
-        error.response?.data || error.message,
+        error.response?.data ||
+        error.message,
     };
   }
 };
