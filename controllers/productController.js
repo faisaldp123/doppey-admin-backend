@@ -218,3 +218,36 @@ export const getNewArrivals = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const addReview = async (req, res) => {
+  try {
+    const { name, comment } = req.body;
+
+    const product = await Product.findById(req.params.id);
+
+    if (!product)
+      return res.status(404).json({
+        message: "Product not found",
+      });
+
+    const reviewImages =
+      req.files?.map((file) => file.path) || [];
+
+    const review = {
+      name,
+      comment,
+      images: reviewImages,
+      createdAt: new Date(),
+    };
+
+    product.reviews.push(review);
+
+    await product.save();
+
+    res.status(201).json(product.reviews);
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
