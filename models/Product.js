@@ -122,6 +122,30 @@ const productSchema = new mongoose.Schema(
       default: "Machine wash cold. Do not bleach. Tumble dry low. Iron on low heat.",
     },
 
+    reviews: [
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+
+    comment: {
+      type: String,
+      required: true,
+    },
+
+    images: {
+      type: [String],
+      default: [],
+    },
+
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+],
+
     // ── End added fields ──
 
     isActive: {

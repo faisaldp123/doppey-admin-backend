@@ -9,6 +9,7 @@ import {
   getBestSellers,
   getNewArrivals,
   getPublicProducts,
+  addReview,
 } from "../controllers/productController.js";
 
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
@@ -21,6 +22,12 @@ router.get("/best-sellers",          getBestSellers);
 router.get("/new-arrivals",          getNewArrivals);
 router.get("/subcategory/:slug",     getProductsBySubCategory);
 router.get("/product/:slug",         getProductBySlug);
+
+router.post(
+  "/:id/review",
+  upload.array("images", 5),
+  addReview
+);
 
 /* ── ADMIN ── */
 router.get(   "/",   protect, adminOnly, getAllProducts);
