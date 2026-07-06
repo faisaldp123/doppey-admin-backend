@@ -57,7 +57,10 @@ console.log("FINAL TOTAL:", finalTotal);
     try {
       const shipment = await createBlueDartShipment(order);
 
-      console.log("BLUEDART RESPONSE:", shipment);
+      console.log(
+  "BLUEDART RESPONSE:",
+  JSON.stringify(shipment, null, 2)
+);
 
       const waybill =
         shipment?.waybill        ||
@@ -66,11 +69,30 @@ console.log("FINAL TOTAL:", finalTotal);
         shipment?.waybillNo      ||
         "";
 
-      if (waybill) {
-        order.waybill        = waybill;
-        order.trackingStatus = "Created";
-        await order.save();
-      }
+      console.log("EXTRACTED WAYBILL IN CONTROLLER:", waybill);
+
+if (waybill) {
+  console.log("SETTING AWB ON ORDER:", order._id);
+
+  order.waybill = String(waybill);
+  order.trackingStatus = "Created";
+
+  console.log("BEFORE SAVE:", {
+    waybill: order.waybill,
+    trackingStatus: order.trackingStatus,
+  });
+
+  await order.save();
+
+  const updatedOrder = await Order.findById(order._id);
+
+  console.log("AFTER SAVE:", {
+    waybill: updatedOrder?.waybill,
+    trackingStatus: updatedOrder?.trackingStatus,
+  });
+} else {
+  console.log("NO WAYBILL FOUND");
+}
     } catch (err) {
       // BlueDart failure does NOT block the order
       // Order is already saved to MongoDB above
