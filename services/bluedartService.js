@@ -23,7 +23,7 @@ async function getBlueDartToken() {
   } catch (error) {
     console.error(
       "BLUEDART TOKEN ERROR:",
-      error.response?.data || error.message
+      JSON.stringify(error.response?.data || error.message, null, 2)
     );
 
     throw error;
@@ -53,8 +53,7 @@ export const extractBlueDartWaybill = (data) => {
   for (const [key, value] of Object.entries(data)) {
     if (
       value &&
-      (typeof value === "string" ||
-        typeof value === "number") &&
+      (typeof value === "string" || typeof value === "number") &&
       /(awb|waybill|shipment)/i.test(key)
     ) {
       return String(value);
@@ -62,7 +61,6 @@ export const extractBlueDartWaybill = (data) => {
 
     if (value && typeof value === "object") {
       const nested = extractBlueDartWaybill(value);
-
       if (nested) return nested;
     }
   }
@@ -72,19 +70,14 @@ export const extractBlueDartWaybill = (data) => {
 
 /* ================= CREATE SHIPMENT ================= */
 
-export const createBlueDartShipment = async (
-  order
-) => {
+export const createBlueDartShipment = async (order) => {
   try {
     if (
       !process.env.BLUEDART_LICENSE_KEY ||
       !process.env.BLUEDART_LOGIN_ID ||
       !process.env.BLUEDART_CUSTOMER_CODE
     ) {
-      console.log(
-        "BLUEDART: Missing credentials"
-      );
-
+      console.log("BLUEDART: Missing credentials");
       return null;
     }
 
@@ -95,17 +88,12 @@ export const createBlueDartShipment = async (
       "phone",
       "city",
       "state",
-    ].filter(
-      (field) => !order.address?.[field]
-    );
+    ].filter((field) => !order.address?.[field]);
 
     if (missingAddress.length) {
       console.log(
-        `BLUEDART: Missing address fields: ${missingAddress.join(
-          ", "
-        )}`
+        `BLUEDART: Missing address fields: ${missingAddress.join(", ")}`
       );
-
       return null;
     }
 
@@ -119,152 +107,325 @@ export const createBlueDartShipment = async (
     const payload = {
       Request: {
         Consignee: {
-          ConsigneeName:
+          AvailableDays: "",
+          AvailableTiming: "",
+
+          ConsigneeName: order.address.fullName,
+
+          ConsigneeAddress1: order.address.street,
+
+          ConsigneeAddress2:
+            order.address.locality || "",
+
+          ConsigneeAddress3: "",
+
+          ConsigneeAttention:
             order.address.fullName,
-          ConsigneeAddress1:
-            order.address.street,
-          ConsigneeAddress2: "",
-          ConsigneePincode:
-            order.address.pincode,
+
+          ConsigneeEmailID:
+            order.email || "",
+
           ConsigneeMobile:
             order.address.phone,
-          ConsigneeCity:
-            order.address.city,
-          ConsigneeState:
-            order.address.state,
-          ConsigneeCountry: "India",
+
+          ConsigneePincode:
+            order.address.pincode,
+
+          ConsigneeTelephone: "",
+
+          ConsigneeGSTNumber: "",
+
+          ConsigneeLatitude: "",
+
+          ConsigneeLongitude: "",
+
+          ConsigneeMaskedContactNumber: "",
+
+          ConsigneeAddressType: "",
+
+          ConsigneeAddressinfo: "",
+
+          ConsigneeFullAddress: "",
         },
 
-        Shipper: {
-          OriginArea:
-            process.env
-              .BLUEDART_ORIGIN_AREA ||
-            "GGN",
+        Returnadds: {
+          ManifestNumber: "",
 
-          CustomerCode:
-            process.env
-              .BLUEDART_CUSTOMER_CODE,
+          ReturnAddress1:
+            order.address.street,
 
-          CustomerName:
-            process.env
-              .BLUEDART_CUSTOMER_NAME ||
+          ReturnAddress2: "",
+
+          ReturnAddress3: "",
+
+          ReturnAddressinfo: "",
+
+          ReturnContact:
+            process.env.BLUEDART_CUSTOMER_NAME ||
             "Doppey",
+
+          ReturnEmailID:
+            order.email || "",
+
+          ReturnLatitude: "",
+
+          ReturnLongitude: "",
+
+          ReturnMaskedContactNumber: "",
+
+          ReturnMobile:
+            order.address.phone,
+
+          ReturnPincode:
+            order.address.pincode,
+
+          ReturnTelephone: "",
         },
 
         Services: {
-          ProductCode:
-            process.env
-              .BLUEDART_PRODUCT_CODE ||
-            "A",
+          AWBNo: "",
 
-          PaymentMode:
-            order.paymentMethod ===
-            "cod"
-              ? "COD"
-              : "Prepaid",
+          ActualWeight: String(
+            process.env.BLUEDART_DEFAULT_WEIGHT || "0.50"
+          ),
 
           CollectableAmount:
-            order.paymentMethod ===
-            "cod"
-              ? Number(
-                  order.totalAmount
-                )
+            order.paymentMethod === "cod"
+              ? Number(order.totalAmount)
               : 0,
 
-          DeclaredValue: Number(
-            order.totalAmount
-          ),
+          DeclaredValue:
+            Number(order.totalAmount),
 
           PieceCount: "1",
 
-          Weight:
-            process.env
-              .BLUEDART_DEFAULT_WEIGHT ||
-            "0.5",
+          ItemCount: 1,
 
-          Dimensions: {
-            Length: Number(
-              process.env
-                .BLUEDART_LENGTH ||
-                30
-            ),
+          ProductCode:
+            process.env.BLUEDART_PRODUCT_CODE || "A",
 
-            Breadth: Number(
-              process.env
-                .BLUEDART_BREADTH ||
-                20
-            ),
+          ProductType: 1,
 
-            Height: Number(
-              process.env
-                .BLUEDART_HEIGHT ||
-                10
-            ),
+          SubProductCode: "C",
+
+          PickupDate: `/Date(${Date.now()})/`,
+
+          PickupTime: "1600",
+
+          PDFOutputNotRequired: true,
+
+          CreditReferenceNo:
+            String(order._id),
+
+          IsDedicatedDeliveryNetwork: false,
+
+          IsDutyTaxPaidByShipper: false,
+
+          IsForcePickup: false,
+
+          IsPartialPickup: false,
+
+          IsReversePickup: false,
+
+          RegisterPickup: false,
+
+          TotalCashPaytoCustomer: 0,
+
+          Officecutofftime: "",
+
+          PackType: "",
+
+          ParcelShopCode: "",
+
+          PayableAt: "",
+
+          PickupMode: "",
+
+          PickupType: "",
+
+          PreferredPickupTimeSlot: "",
+
+          ProductFeature: "",
+
+          DeliveryTimeSlot: "",
+
+          FavouringName: "",
+
+          SpecialInstruction: "",
+
+          Commodity: {
+            CommodityDetail1: "Fashion",
+
+            CommodityDetail2: "Clothing",
+
+            CommodityDetail3: "Ecommerce",
           },
+
+          Dimensions: [
+            {
+              Length: Number(
+                process.env.BLUEDART_LENGTH || 30
+              ),
+
+              Breadth: Number(
+                process.env.BLUEDART_BREADTH || 20
+              ),
+
+              Height: Number(
+                process.env.BLUEDART_HEIGHT || 10
+              ),
+
+              Count: 1,
+            },
+          ],
+
+          itemdtl: [
+            {
+              ItemID: "ITEM1",
+
+              ItemName: "Product",
+
+              ItemValue:
+                Number(order.totalAmount),
+
+              Itemquantity: 1,
+
+              TotalValue:
+                Number(order.totalAmount),
+
+              InvoiceNumber: "",
+
+              InvoiceDate:
+                `/Date(${Date.now()})/`,
+
+              ProductDesc1: "",
+
+              ProductDesc2: "",
+
+              SubProduct1: "",
+
+              SubProduct2: "",
+
+              Instruction: "",
+
+              ReturnReason: "",
+
+              PlaceofSupply: "",
+
+              HSCode: "",
+
+              SellerName: "",
+
+              SellerGSTNNumber: "",
+
+              SKUNumber: "",
+
+              countryOfOrigin: "",
+
+              docType: "",
+
+              supplyType: "",
+
+              subSupplyType: 0,
+
+              CGSTAmount: 0,
+
+              SGSTAmount: 0,
+
+              IGSTAmount: 0,
+
+              TaxableAmount: 0,
+
+              cessAmount: "0.0",
+            },
+          ],
+
+          noOfDCGiven: 0,
         },
 
-        SubShipper: {
-          SubShipperCode:
-            process.env
-              .BLUEDART_SUB_SHIPPER_CODE ||
-            process.env
-              .BLUEDART_CUSTOMER_CODE,
+        Shipper: {
+          CustomerCode:
+            process.env.BLUEDART_CUSTOMER_CODE,
+
+          CustomerName:
+            process.env.BLUEDART_CUSTOMER_NAME ||
+            "Doppey",
+
+          CustomerAddress1: "",
+
+          CustomerAddress2: "",
+
+          CustomerAddress3: "",
+
+          CustomerAddressinfo: "",
+
+          CustomerBusinessPartyTypeCode: "",
+
+          CustomerEmailID: "",
+
+          CustomerGSTNumber: "",
+
+          CustomerLatitude: "",
+
+          CustomerLongitude: "",
+
+          CustomerMaskedContactNumber: "",
+
+          CustomerMobile: "",
+
+          CustomerPincode: "",
+
+          CustomerTelephone: "",
+
+          IsToPayCustomer: false,
+
+          OriginArea:
+            process.env.BLUEDART_ORIGIN_AREA || "DEL",
+
+          Sender:
+            process.env.BLUEDART_CUSTOMER_NAME ||
+            "Doppey",
+
+          VendorCode: "",
         },
       },
 
       Profile: {
         LoginID:
-          process.env
-            .BLUEDART_LOGIN_ID,
+          process.env.BLUEDART_LOGIN_ID,
 
         LicenceKey:
-          process.env
-            .BLUEDART_LICENSE_KEY,
+          process.env.BLUEDART_LICENSE_KEY,
 
         Api_type: "S",
-
-        Version: "1.3",
       },
     };
 
     console.log(
       "BLUEDART REQUEST:",
-      JSON.stringify(
-        payload,
-        null,
-        2
-      )
+      JSON.stringify(payload, null, 2)
     );
 
-    const response =
-      await axios.post(
-        process.env
-          .BLUEDART_API_URL ||
-          DEFAULT_BLUEDART_API_URL,
-
-        payload,
-
-        {
-          headers: {
-            "Content-Type":
-              "application/json",
-
-            JWTToken: token,
-          },
-
-          timeout: 30000,
-        }
-      );
+    const response = await axios.post(
+      process.env.BLUEDART_API_URL ||
+        DEFAULT_BLUEDART_API_URL,
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          JWTToken: token,
+        },
+        timeout: 30000,
+      }
+    );
 
     console.log(
       "BLUEDART RESPONSE:",
-      response.data
+      JSON.stringify(response.data, null, 2)
     );
 
     const waybill =
-      extractBlueDartWaybill(
-        response.data
-      );
+      extractBlueDartWaybill(response.data);
 
     console.log(
       "EXTRACTED WAYBILL:",
@@ -277,9 +438,13 @@ export const createBlueDartShipment = async (
     };
   } catch (error) {
     console.error(
-      "BLUEDART ERROR:",
-      error.response?.data ||
-        error.message
+      "BLUEDART ERROR FULL:",
+      JSON.stringify(
+        error.response?.data ||
+          error.message,
+        null,
+        2
+      )
     );
 
     return {
