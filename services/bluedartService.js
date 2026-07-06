@@ -103,6 +103,29 @@ export const createBlueDartShipment = async (order) => {
       "BLUEDART JWT:",
       token.substring(0, 20) + "..."
     );
+    console.log("===== SHIPPER ENV =====");
+
+console.log(
+  "ADDRESS1:",
+  process.env.BLUEDART_SHIPPER_ADDRESS1
+);
+
+console.log(
+  "PINCODE:",
+  process.env.BLUEDART_SHIPPER_PINCODE
+);
+
+console.log(
+  "PHONE:",
+  process.env.BLUEDART_SHIPPER_PHONE
+);
+
+console.log(
+  "EMAIL:",
+  process.env.BLUEDART_SHIPPER_EMAIL
+);
+
+console.log("=======================");
 
     const payload = {
       Request: {
@@ -394,6 +417,10 @@ export const createBlueDartShipment = async (order) => {
     "Doppey",
 
   VendorCode: "",
+},
+SubShipper: {
+  SubShipperCode:
+    process.env.BLUEDART_CUSTOMER_CODE,
 },
       },
 
