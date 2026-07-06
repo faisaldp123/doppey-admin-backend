@@ -56,6 +56,14 @@ export const trackOrder = async (req, res) => {
         },
       }
     );
+    console.log(
+  "TRACKING RESPONSE:",
+  JSON.stringify(
+    response.data,
+    null,
+    2
+  )
+);
 
     return res.json(response.data);
   } catch (error) {
