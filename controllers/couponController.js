@@ -10,10 +10,33 @@ export const createCoupon = async (req, res) => {
   }
 };
 
-/* ================= GET ALL COUPONS ================= */
+/* ================= GET ALL COUPONS (ADMIN) ================= */
 export const getCoupons = async (req, res) => {
   const coupons = await Coupon.find().sort({ createdAt: -1 });
   res.json(coupons);
+};
+
+/* ================= GET ACTIVE COUPONS (PUBLIC / STOREFRONT) ================= */
+// Only returns coupons that are safe to show to shoppers:
+// isActive, not expired, and not past their usage limit.
+export const getPublicCoupons = async (req, res) => {
+  try {
+    const now = new Date();
+
+    const coupons = await Coupon.find({
+      isActive: true,
+      expiryDate: { $gte: now },
+      $expr: { $lt: ["$usedCount", "$usageLimit"] },
+    })
+      .select(
+        "code discountType discountValue minOrderValue maxDiscount expiryDate description"
+      )
+      .sort({ createdAt: -1 });
+
+    res.json(coupons);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 /* ================= UPDATE COUPON ================= */
