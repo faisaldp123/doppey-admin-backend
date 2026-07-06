@@ -65,7 +65,12 @@ export const trackOrder = async (req, res) => {
   )
 );
 
-    return res.json(response.data);
+return res.json({
+  ...order.toObject(),
+
+  blueDartTracking:
+    response.data,
+});
   } catch (error) {
     console.log(
       "BlueDart Tracking Error:",
