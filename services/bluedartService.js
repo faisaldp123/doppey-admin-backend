@@ -103,6 +103,29 @@ export const createBlueDartShipment = async (order) => {
       "BLUEDART JWT:",
       token.substring(0, 20) + "..."
     );
+    console.log("===== SHIPPER ENV =====");
+
+console.log(
+  "ADDRESS1:",
+  process.env.BLUEDART_SHIPPER_ADDRESS1
+);
+
+console.log(
+  "PINCODE:",
+  process.env.BLUEDART_SHIPPER_PINCODE
+);
+
+console.log(
+  "PHONE:",
+  process.env.BLUEDART_SHIPPER_PHONE
+);
+
+console.log(
+  "EMAIL:",
+  process.env.BLUEDART_SHIPPER_EMAIL
+);
+
+console.log("=======================");
 
     const payload = {
       Request: {
@@ -185,9 +208,10 @@ export const createBlueDartShipment = async (order) => {
         Services: {
           AWBNo: "",
 
-          ActualWeight: String(
-            process.env.BLUEDART_DEFAULT_WEIGHT || "0.50"
-          ),
+          ActualWeight:
+  Number(
+    process.env.BLUEDART_DEFAULT_WEIGHT || 0.5
+  ).toFixed(2),
 
           CollectableAmount:
             order.paymentMethod === "cod"
@@ -215,7 +239,7 @@ export const createBlueDartShipment = async (order) => {
           PDFOutputNotRequired: true,
 
           CreditReferenceNo:
-            String(order._id),
+  `ORD${Date.now().toString().slice(-10)}`,
 
           IsDedicatedDeliveryNetwork: false,
 
@@ -344,50 +368,60 @@ export const createBlueDartShipment = async (order) => {
         },
 
         Shipper: {
-          CustomerCode:
-            process.env.BLUEDART_CUSTOMER_CODE,
+  CustomerCode:
+    process.env.BLUEDART_CUSTOMER_CODE,
 
-          CustomerName:
-            process.env.BLUEDART_CUSTOMER_NAME ||
-            "Doppey",
+  CustomerName:
+    process.env.BLUEDART_CUSTOMER_NAME ||
+    "Doppey",
 
-          CustomerAddress1: "",
+  CustomerAddress1:
+    process.env.BLUEDART_SHIPPER_ADDRESS1,
 
-          CustomerAddress2: "",
+  CustomerAddress2:
+    process.env.BLUEDART_SHIPPER_ADDRESS2 || "",
 
-          CustomerAddress3: "",
+  CustomerAddress3:
+    process.env.BLUEDART_SHIPPER_ADDRESS3 || "",
 
-          CustomerAddressinfo: "",
+  CustomerAddressinfo: "",
 
-          CustomerBusinessPartyTypeCode: "",
+  CustomerBusinessPartyTypeCode: "",
 
-          CustomerEmailID: "",
+  CustomerEmailID:
+    process.env.BLUEDART_SHIPPER_EMAIL || "",
 
-          CustomerGSTNumber: "",
+  CustomerGSTNumber: "",
 
-          CustomerLatitude: "",
+  CustomerLatitude: "",
 
-          CustomerLongitude: "",
+  CustomerLongitude: "",
 
-          CustomerMaskedContactNumber: "",
+  CustomerMaskedContactNumber: "",
 
-          CustomerMobile: "",
+  CustomerMobile:
+    process.env.BLUEDART_SHIPPER_PHONE,
 
-          CustomerPincode: "",
+  CustomerPincode:
+    process.env.BLUEDART_SHIPPER_PINCODE,
 
-          CustomerTelephone: "",
+  CustomerTelephone: "",
 
-          IsToPayCustomer: false,
+  IsToPayCustomer: false,
 
-          OriginArea:
-            process.env.BLUEDART_ORIGIN_AREA || "DEL",
+  OriginArea:
+    process.env.BLUEDART_ORIGIN_AREA || "DEL",
 
-          Sender:
-            process.env.BLUEDART_CUSTOMER_NAME ||
-            "Doppey",
+  Sender:
+    process.env.BLUEDART_CUSTOMER_NAME ||
+    "Doppey",
 
-          VendorCode: "",
-        },
+  VendorCode: "",
+},
+SubShipper: {
+  SubShipperCode:
+    process.env.BLUEDART_CUSTOMER_CODE,
+},
       },
 
       Profile: {
