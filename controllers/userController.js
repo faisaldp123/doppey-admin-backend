@@ -336,8 +336,32 @@ export const removeFromWishlist = async (req, res) => {
 /* ================= CART ================= */
 
 export const getCart = async (req, res) => {
-  const user = await User.findById(req.user._id).populate("cart.product");
-  res.json(user.cart);
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const user = await User.findById(req.user._id).populate("cart.product");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json(user.cart || []);
+  } catch (err) {
+    console.error("Get Cart Error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 };
 
 export const addToCart = async (req, res) => {
