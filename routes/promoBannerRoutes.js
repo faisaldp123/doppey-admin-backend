@@ -1,10 +1,8 @@
 import express from "express";
-import upload from "../middleware/upload.js";
-
-import {
-  protect,
-  adminOnly,
-} from "../middleware/authMiddleware.js";
+import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
+import { protect, adminOnly } from "../middleware/authMiddleware.js";
 
 import {
   getPublicPromoBanners,
@@ -16,14 +14,19 @@ import {
 
 const router = express.Router();
 
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "doppey-promo-banners",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+  },
+});
+
+const upload = multer({ storage });
+
 router.get("/public", getPublicPromoBanners);
 
-router.get(
-  "/",
-  protect,
-  adminOnly,
-  getAllPromoBanners
-);
+router.get("/", protect, adminOnly, getAllPromoBanners);
 
 router.post(
   "/",
@@ -41,11 +44,6 @@ router.put(
   updatePromoBanner
 );
 
-router.delete(
-  "/:id",
-  protect,
-  adminOnly,
-  deletePromoBanner
-);
+router.delete("/:id", protect, adminOnly, deletePromoBanner);
 
 export default router;
