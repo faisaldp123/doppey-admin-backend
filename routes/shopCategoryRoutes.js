@@ -3,7 +3,7 @@ import upload from "../middleware/upload.js";
 import {
   protect,
   adminOnly,
-} from "../middleware/auth.js";
+} from "../middleware/authMiddleware.js";
 
 import {
   getPublicCategories,
