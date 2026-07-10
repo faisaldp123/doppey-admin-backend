@@ -19,6 +19,10 @@ import returnRoutes from "./routes/returnRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import bannerRoutes from "./routes/bannerRoutes.js";
 import trackingRoutes from "./routes/trackingRoutes.js";
+import shopCategoryRoutes from "./routes/shopCategoryRoutes.js";
+import promoBannerRoutes from "./routes/promoBannerRoutes.js";
+import lifestyleSectionRoutes from "./routes/lifestyleSectionRoutes.js";
+import brandStoryRoutes from "./routes/brandStoryRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -64,6 +68,16 @@ app.use("/api/returns", returnRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/banners", bannerRoutes);
 app.use("/api", trackingRoutes);
+app.use("/api/shop-categories", shopCategoryRoutes);
+app.use("/api/promo-banners", promoBannerRoutes);
+app.use(
+  "/api/lifestyle-sections",
+  lifestyleSectionRoutes
+);
+app.use(
+  "/api/brand-story",
+  brandStoryRoutes
+);
 
 // START SERVER
 const PORT = process.env.PORT || 5000;
