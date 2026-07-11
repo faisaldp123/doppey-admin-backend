@@ -4,7 +4,7 @@ export const getPublicPromoBanners = async (req, res) => {
   try {
     const banners = await PromoBanner.find({
       isActive: true,
-    }).sort({ order: 1 });
+    }).sort({ createdAt: -1 }); // newest first, automatically
 
     res.json(banners);
   } catch (err) {
@@ -17,7 +17,7 @@ export const getPublicPromoBanners = async (req, res) => {
 export const getAllPromoBanners = async (req, res) => {
   try {
     const banners = await PromoBanner.find().sort({
-      order: 1,
+      createdAt: -1, // newest first, automatically
     });
 
     res.json(banners);
@@ -35,7 +35,6 @@ export const createPromoBanner = async (req, res) => {
       subtitle,
       buttonText,
       buttonLink,
-      order,
       isActive,
     } = req.body;
 
@@ -50,7 +49,6 @@ export const createPromoBanner = async (req, res) => {
       subtitle,
       buttonText,
       buttonLink,
-      order,
       isActive:
         isActive !== undefined
           ? isActive === "true"
@@ -88,9 +86,6 @@ export const updatePromoBanner = async (req, res) => {
 
     banner.buttonLink =
       req.body.buttonLink ?? banner.buttonLink;
-
-    if (req.body.order !== undefined)
-      banner.order = req.body.order;
 
     if (req.body.isActive !== undefined)
       banner.isActive =

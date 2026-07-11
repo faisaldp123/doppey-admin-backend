@@ -4,7 +4,7 @@ export const getPublicBrandStories = async (req, res) => {
   try {
     const stories = await BrandStory.find({
       isActive: true,
-    }).sort({ order: 1 });
+    }).sort({ createdAt: -1 }); // newest first, automatically
 
     res.json(stories);
   } catch (err) {
@@ -17,7 +17,7 @@ export const getPublicBrandStories = async (req, res) => {
 export const getAllBrandStories = async (req, res) => {
   try {
     const stories = await BrandStory.find().sort({
-      order: 1,
+      createdAt: -1, // newest first, automatically
     });
 
     res.json(stories);
@@ -38,7 +38,6 @@ export const createBrandStory = async (req, res) => {
       paragraphThree,
       buttonText,
       buttonLink,
-      order,
       isActive,
     } = req.body;
 
@@ -56,7 +55,6 @@ export const createBrandStory = async (req, res) => {
       paragraphThree,
       buttonText,
       buttonLink,
-      order: order || 0,
       isActive:
         isActive !== undefined
           ? isActive === "true"
@@ -109,9 +107,6 @@ export const updateBrandStory = async (req, res) => {
     if (req.body.buttonLink !== undefined)
       story.buttonLink =
         req.body.buttonLink;
-
-    if (req.body.order !== undefined)
-      story.order = req.body.order;
 
     if (req.body.isActive !== undefined)
       story.isActive =

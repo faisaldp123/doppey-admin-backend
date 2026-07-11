@@ -4,7 +4,7 @@ export const getPublicLifestyleSections = async (req, res) => {
   try {
     const sections = await LifestyleSection.find({
       isActive: true,
-    }).sort({ order: 1 });
+    }).sort({ createdAt: -1 }); // newest first, automatically
 
     res.json(sections);
   } catch (err) {
@@ -17,7 +17,7 @@ export const getPublicLifestyleSections = async (req, res) => {
 export const getAllLifestyleSections = async (req, res) => {
   try {
     const sections = await LifestyleSection.find().sort({
-      order: 1,
+      createdAt: -1, // newest first, automatically
     });
 
     res.json(sections);
@@ -38,7 +38,6 @@ export const createLifestyleSection = async (req, res) => {
       buttonLink,
       rightTopTitle,
       rightBottomTitle,
-      order,
       isActive,
     } = req.body;
 
@@ -60,7 +59,6 @@ export const createLifestyleSection = async (req, res) => {
       buttonLink,
       rightTopTitle,
       rightBottomTitle,
-      order: order || 0,
       isActive:
         isActive !== undefined
           ? isActive === "true"
@@ -112,9 +110,6 @@ export const updateLifestyleSection = async (req, res) => {
     if (req.body.rightBottomTitle !== undefined)
       section.rightBottomTitle =
         req.body.rightBottomTitle;
-
-    if (req.body.order !== undefined)
-      section.order = req.body.order;
 
     if (req.body.isActive !== undefined)
       section.isActive =

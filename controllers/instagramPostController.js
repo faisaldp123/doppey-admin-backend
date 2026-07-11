@@ -4,7 +4,7 @@ export const getPublicInstagramPosts = async (req, res) => {
   try {
     const posts = await InstagramPost.find({
       isActive: true,
-    }).sort({ order: 1 });
+    }).sort({ createdAt: -1 }); // newest first, automatically
 
     res.json(posts);
   } catch (err) {
@@ -17,7 +17,7 @@ export const getPublicInstagramPosts = async (req, res) => {
 export const getAllInstagramPosts = async (req, res) => {
   try {
     const posts = await InstagramPost.find().sort({
-      order: 1,
+      createdAt: -1, // newest first, automatically
     });
 
     res.json(posts);
@@ -30,7 +30,7 @@ export const getAllInstagramPosts = async (req, res) => {
 
 export const createInstagramPost = async (req, res) => {
   try {
-    const { link, order, isActive } = req.body;
+    const { link, isActive } = req.body;
 
     if (!req.file) {
       return res.status(400).json({
@@ -40,7 +40,6 @@ export const createInstagramPost = async (req, res) => {
 
     const post = await InstagramPost.create({
       link: link || "https://instagram.com",
-      order: order || 0,
       isActive:
         isActive !== undefined
           ? isActive === "true"
@@ -67,7 +66,6 @@ export const updateInstagramPost = async (req, res) => {
     }
 
     if (req.body.link !== undefined) post.link = req.body.link;
-    if (req.body.order !== undefined) post.order = req.body.order;
     if (req.body.isActive !== undefined)
       post.isActive = req.body.isActive === "true";
 
