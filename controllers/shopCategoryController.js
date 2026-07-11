@@ -1,5 +1,14 @@
 import ShopCategory from "../models/ShopCategory.js";
 
+// ← Fixed, predictable display sequence — no numbers, no confusion.
+// Position in this list = position on the website, always.
+const CATEGORY_ORDER = ["ALL", "MEN", "WOMEN", "KIDS", "ACCESSORIES"];
+
+const getOrderForTitle = (title) => {
+  const index = CATEGORY_ORDER.indexOf((title || "").toUpperCase());
+  return index !== -1 ? index : CATEGORY_ORDER.length; // unknown titles go last
+};
+
 export const getPublicCategories = async (req, res) => {
   try {
     const categories = await ShopCategory.find({
@@ -33,7 +42,6 @@ export const createCategory = async (req, res) => {
     const {
       title,
       link,
-      order,
       isActive,
     } = req.body;
 
@@ -46,7 +54,7 @@ export const createCategory = async (req, res) => {
     const category = await ShopCategory.create({
       title,
       link,
-      order,
+      order: getOrderForTitle(title), // ← auto-set, admin never sees a number
       isActive:
         isActive !== undefined
           ? isActive === "true"
@@ -73,14 +81,13 @@ export const updateCategory = async (req, res) => {
       });
     }
 
-    category.title =
-      req.body.title || category.title;
+    if (req.body.title) {
+      category.title = req.body.title;
+      category.order = getOrderForTitle(req.body.title); // ← recalculated automatically
+    }
 
     category.link =
       req.body.link || category.link;
-
-    if (req.body.order !== undefined)
-      category.order = req.body.order;
 
     if (req.body.isActive !== undefined)
       category.isActive =
