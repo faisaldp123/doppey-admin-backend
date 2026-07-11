@@ -23,6 +23,7 @@ import shopCategoryRoutes from "./routes/shopCategoryRoutes.js";
 import promoBannerRoutes from "./routes/promoBannerRoutes.js";
 import lifestyleSectionRoutes from "./routes/lifestyleSectionRoutes.js";
 import brandStoryRoutes from "./routes/brandStoryRoutes.js";
+import instagramPostRoutes from "./routes/instagramPostRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -78,6 +79,7 @@ app.use(
   "/api/brand-story",
   brandStoryRoutes
 );
+app.use("/api/instagram-posts", instagramPostRoutes);
 
 // START SERVER
 const PORT = process.env.PORT || 5000;
