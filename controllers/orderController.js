@@ -1,4 +1,5 @@
 import Order from "../models/Order.js";
+import Product from "../models/Product.js";
 import { createBlueDartShipment } from "../services/bluedartService.js"; // ← ADD THIS IMPORT
 
 /* ================= USER ================= */
@@ -23,6 +24,35 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ message: "Address required" });
     }
 
+    const requestedStock = new Map();
+    for (const item of items) {
+      const quantity = Number(item.quantity);
+      if (!item.product || !Number.isInteger(quantity) || quantity < 1) {
+        return res.status(400).json({ message: "Each order item needs a valid product and quantity" });
+      }
+      const productId = String(item.product);
+      requestedStock.set(productId, (requestedStock.get(productId) || 0) + quantity);
+    }
+
+    // Atomic conditional updates prevent concurrent orders from overselling.
+    const reservedStock = [];
+    try {
+      for (const [productId, quantity] of requestedStock) {
+        const product = await Product.findOneAndUpdate(
+          { _id: productId, stock: { $gte: quantity } },
+          { $inc: { stock: -quantity } },
+          { new: true }
+        );
+        if (!product) throw new Error("One or more products are out of stock or have insufficient quantity");
+        reservedStock.push({ productId, quantity });
+      }
+    } catch (stockError) {
+      await Promise.all(reservedStock.map(({ productId, quantity }) =>
+        Product.findByIdAndUpdate(productId, { $inc: { stock: quantity } })
+      ));
+      return res.status(409).json({ message: stockError.message });
+    }
+
     const itemsTotal = items.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
@@ -40,7 +70,9 @@ console.log("COD:", codCharge);
 console.log("FRONTEND TOTAL:", total);
 console.log("FINAL TOTAL:", finalTotal);
 
-    const order = await Order.create({
+    let order;
+    try {
+      order = await Order.create({
       user:           req.user._id,
       items,
       address,
@@ -51,7 +83,13 @@ console.log("FINAL TOTAL:", finalTotal);
       waybill:        "",
       trackingStatus: "Pending",
       status:         "Placed",
-    });
+      });
+    } catch (orderError) {
+      await Promise.all(reservedStock.map(({ productId, quantity }) =>
+        Product.findByIdAndUpdate(productId, { $inc: { stock: quantity } })
+      ));
+      throw orderError;
+    }
 
     // ← BLUEDART INTEGRATION ADDED HERE
     try {
@@ -167,7 +205,15 @@ export const updateOrderStatus = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
+    const wasCancelled = order.status === "Cancelled";
     order.status = status;
+
+    if (status === "Cancelled" && !wasCancelled && !order.stockRestored) {
+      await Promise.all(order.items.map((item) =>
+        Product.findByIdAndUpdate(item.product, { $inc: { stock: Number(item.quantity) || 0 } })
+      ));
+      order.stockRestored = true;
+    }
     await order.save();
     res.json(order);
   } catch (error) {

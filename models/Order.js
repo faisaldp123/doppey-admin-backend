@@ -76,6 +76,11 @@ trackingStatus: {
       default: "Placed",
     },
 
+    stockRestored: {
+      type: Boolean,
+      default: false,
+    },
+
     address: {
       fullName: String,
       phone: String,
